@@ -80,6 +80,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your full name";
+                            }
+                            return null;
+                          },
                         ),
                         
                         SizedBox(height: 15),
@@ -102,6 +108,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your email";
+                            }
+                            return null;
+                          },
                         ),
               
                         SizedBox(height: 15),
@@ -124,6 +136,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your email";
+                            }
+                            return null;
+                          }
                         ),
                         SizedBox(height: 15),
               
@@ -145,6 +163,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your address";
+                            }
+                            return null;
+                          }
                         ),
               
                         SizedBox(height: 15),
@@ -181,6 +205,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your password";
+                            }
+                            return null;
+                          }
                         ),
               
                         SizedBox(height: 15),
@@ -216,6 +246,12 @@ class _SignupScreenState extends State<SignupScreen> {
                             filled: true,
                             fillColor: Color.fromARGB(44, 201, 116, 166),
                           ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your password";
+                            }
+                            return null;
+                          }
                         ),
                         SizedBox(height: 44),
               
@@ -228,12 +264,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              if(_formKey.currentState!.validate()){
+                                Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => const LoginScreen(),
                                 ),
-                              );
+                              );}
                             },
                             child: Text("Signup"),
                           ),
