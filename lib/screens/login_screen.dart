@@ -18,6 +18,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _hiddenPassword = true;
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
@@ -73,6 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Color.fromARGB(44, 201, 116, 166),
                   ),
+                  validator:(value) {
+                    if (value == null || value.isEmpty){
+                      return "Please enter your email";
+                    }
+                    return null;
+                  },
                 ),
 
                 SizedBox(height: 31),
@@ -109,6 +122,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Color.fromARGB(44, 201, 116, 166),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please enter your password";
+                    }
+                    return null;
+                  },
                 ),
 
                 SizedBox(height: 50),
@@ -122,12 +141,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      if(_formKey.currentState!.validate()){ Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const HomeScreen(),
                         ),
-                      );
+                      );}
                     },
                     child: Text("Login"),
                   ),
@@ -142,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                SizedBox(height: 85),
+                SizedBox(height: 122),
 
                 Align(
                   alignment: Alignment.centerRight,
