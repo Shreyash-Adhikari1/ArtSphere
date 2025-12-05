@@ -55,15 +55,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 10, 0, 10),
-            child: Text(
-              "Trending Posts",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(20, 10, 0, 10),
+              child: Text(
+                "Trending Posts",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -73,7 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: dummyPosts.length,
               itemBuilder: (context, index) {
                 final post = dummyPosts[index];
-                return _buildPostCard(post);
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 500),
+                    child: _buildPostCard(post)));
               },
             ),
           ),
@@ -158,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 10),
 
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Icon(Icons.favorite_border,
                   size: 28, color: Color(0xFFC974A6)),
