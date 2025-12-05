@@ -14,7 +14,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> onboardingData = [
     {
-      "image": "assets/images/onboarding_welcome.png", // placeholder image
+      "image": "assets/images/onboarding_welc.png",
       "title": "Welcome to ArtSphere",
       "description": "Discover amazing art from talented creators around the world."
     },
