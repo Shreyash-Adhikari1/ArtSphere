@@ -1,5 +1,6 @@
 // import 'package:artsphere/screens/home/home_screen.dart';
 import 'package:artsphere/screens/splash/splash_screen.dart';
+import 'package:artsphere/themes/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class MyApp extends StatelessWidget {
@@ -9,6 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: applicationTheme(),
       home:SplashScreen() ,
     );
   }

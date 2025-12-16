@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PostcardWidget extends StatelessWidget {
-  const PostcardWidget({
-    super.key,
-    required this.post,
-  });
+  const PostcardWidget({super.key, required this.post});
 
   final Map<String, String> post;
 
@@ -21,12 +18,24 @@ class PostcardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Text(
-            "@${post['username']}   Posted - ${post['time']}",
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+              children: [
+                TextSpan(text: "@${post['username']}   "),
+                TextSpan(
+                  text: "Posted - ${post['time']}",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.normal
+                    ),
+                ),
+              ],
             ),
           ),
 
@@ -46,10 +55,7 @@ class PostcardWidget extends StatelessWidget {
 
           Text(
             post['caption']!,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 12, color: Colors.black87, fontFamily: 'Poppins'),
           ),
 
           const SizedBox(height: 10),
@@ -57,8 +63,7 @@ class PostcardWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Icon(Icons.favorite_border,
-                  size: 28, color: Color(0xFFC974A6)),
+              Icon(Icons.favorite_border, size: 28, color: Color(0xFFC974A6)),
               Icon(Icons.send_outlined, size: 26),
               Icon(Icons.bookmark_border, size: 28),
             ],
