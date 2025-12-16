@@ -1,5 +1,5 @@
-import 'package:artsphere/screens/home_screen.dart';
-import 'package:artsphere/screens/signup_screen.dart';
+import 'package:artsphere/screens/home/home_screen.dart';
+import 'package:artsphere/screens/auth/signup_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

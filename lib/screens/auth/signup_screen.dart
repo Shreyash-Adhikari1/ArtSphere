@@ -1,4 +1,4 @@
-import 'package:artsphere/screens/login_screen.dart';
+import 'package:artsphere/screens/auth/login_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
