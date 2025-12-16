@@ -2,7 +2,6 @@ import 'package:artsphere/screens/home/challenges_screen.dart';
 import 'package:artsphere/screens/home/create_screen.dart';
 import 'package:artsphere/screens/home/discover_screen.dart';
 import 'package:artsphere/screens/home/profile_screen.dart';
-import 'package:artsphere/widgets/postcard_widget.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -71,8 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.add_box_outlined),
-              label: "Post",
+              label: "Create",
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.extension),
+              label: "Challenges"
+              ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               label: "Profile",
