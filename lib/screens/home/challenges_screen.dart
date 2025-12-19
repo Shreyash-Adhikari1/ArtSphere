@@ -10,6 +10,6 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return SizedBox(child: Text("This is Create Screen"));
   }
 }

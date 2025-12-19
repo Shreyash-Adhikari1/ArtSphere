@@ -64,7 +64,7 @@ class PostcardWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Icon(Icons.favorite_border, size: 28, color: Color(0xFFC974A6)),
-              Icon(Icons.send_outlined, size: 26),
+              Icon(Icons.share_outlined, size: 26),
               Icon(Icons.bookmark_border, size: 28),
             ],
           ),

@@ -78,6 +78,10 @@ flutter:
     - family: Bree Serif
       fonts:
         - asset: assets/fonts/BreeSerif-Regular.ttf
+
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
         
 
   #
