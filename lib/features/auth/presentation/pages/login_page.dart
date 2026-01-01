@@ -46,7 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<UserState>(userViewModelProvider,(previous,next){
       if (next.status == UserStatus.authenticated) {
         AppRoutes.pushReplacement(context, HomeScreen());
-        SnackbarUtils.showSuccess(context, "Login Successful");
+        SnackbarUtils.showSuccess(context, "Login Failed");
       }else if(next.status == UserStatus.error && next.errorMessage != null){
         SnackbarUtils.showError(context, next.errorMessage ?? "Login Failed");
       }
@@ -155,7 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
 
-                SizedBox(height: 50),
+                SizedBox(height: 30),
 
                 SizedBox(
                   height: 35,
@@ -181,7 +181,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                SizedBox(height: 80),
+                SizedBox(height: 60),
 
                 Align(
                   alignment: Alignment.centerRight,
