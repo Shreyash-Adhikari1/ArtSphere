@@ -46,7 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<UserState>(userViewModelProvider,(previous,next){
       if (next.status == UserStatus.authenticated) {
         AppRoutes.pushReplacement(context, HomeScreen());
-        SnackbarUtils.showSuccess(context, "Login Failed");
+        SnackbarUtils.showSuccess(context, "Login SuccessFull");
       }else if(next.status == UserStatus.error && next.errorMessage != null){
         SnackbarUtils.showError(context, next.errorMessage ?? "Login Failed");
       }
