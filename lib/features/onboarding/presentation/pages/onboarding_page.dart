@@ -1,4 +1,4 @@
-import 'package:artsphere/screens/auth/login_screen.dart';
+import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {

@@ -1,21 +1,37 @@
+import 'package:artsphere/app/routes/app_routes.dart';
+import 'package:artsphere/core/utils/snackbar_utils.dart';
+import 'package:artsphere/features/auth/presentation/state/user_state.dart';
+import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:artsphere/screens/home/home_screen.dart';
-import 'package:artsphere/screens/auth/signup_screen.dart';
+import 'package:artsphere/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _hiddenPassword = true;
+
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      await ref
+          .read(userViewModelProvider.notifier)
+          .login(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+    }
+  }
 
   @override
   void dispose() {
@@ -26,6 +42,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    ref.listen<UserState>(userViewModelProvider,(previous,next){
+      if (next.status == UserStatus.authenticated) {
+        AppRoutes.pushReplacement(context, HomeScreen());
+        SnackbarUtils.showSuccess(context, "Login Successful");
+      }else if(next.status == UserStatus.error && next.errorMessage != null){
+        SnackbarUtils.showError(context, next.errorMessage ?? "Login Failed");
+      }
+    });
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -80,8 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Color.fromARGB(44, 201, 116, 166),
                   ),
-                  validator:(value) {
-                    if (value == null || value.isEmpty){
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       return "Please enter your email";
                     }
                     return null;
@@ -141,12 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      if(_formKey.currentState!.validate()){ Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomeScreen(),
-                        ),
-                      );}
+                      _handleLogin();
                     },
                     child: Text("Login"),
                   ),
