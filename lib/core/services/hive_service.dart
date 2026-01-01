@@ -1,7 +1,13 @@
 import 'package:artsphere/core/constants/hive_table_constant.dart';
 import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+
+// Hivfe Srevice Provider
+final hiveServiceProvider = Provider<HiveService>((ref){
+  return HiveService();
+});
 
 class HiveService {
   Future <void>init() async{
@@ -55,8 +61,8 @@ Future<UserHiveModel?> loginUser(String email, String password) async{
 }
 
 // user logout
-Future<void>logout(String userId) async{
-  await _userBox.delete(userId);
+Future<void>logout() async{
+
 }
 
 // Get Current User.
@@ -64,4 +70,8 @@ UserHiveModel? getCurrentUser(String userId){
   return _userBox.get(userId);
 }
 
+bool isEmailExists(String email) {
+  final users= _userBox.values.where((user)=>user.email == email);
+  return users.isNotEmpty;
+}
 }
