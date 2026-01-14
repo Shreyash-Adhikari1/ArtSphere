@@ -15,7 +15,7 @@ final userLocalDatasourceProvider = Provider<UserLocalDatasource>((ref) {
   );
 });
 
-class UserLocalDatasource implements IUserDatasource {
+class UserLocalDatasource implements IUserLocalDatasource {
   final HiveService _hiveService;
   final UserSessionService _userSessionService;
 
@@ -23,7 +23,7 @@ class UserLocalDatasource implements IUserDatasource {
     required HiveService hiveService,
     required UserSessionService userSessionService,
   }) : _hiveService = hiveService,
-       _userSessionService = userSessionService;
+      _userSessionService = userSessionService;
 
   @override
   Future<UserHiveModel?> getCurrentUser() {
@@ -72,12 +72,7 @@ class UserLocalDatasource implements IUserDatasource {
   }
 
   @override
-  Future<bool> registerUser(UserHiveModel model) async {
-    try {
-      await _hiveService.registerUser(model);
-      return Future.value(true);
-    } catch (e) {
-      return Future.value(false);
-    }
+  Future<UserHiveModel> registerUser(UserHiveModel model) async {
+      return await _hiveService.registerUser(model);
   }
 }

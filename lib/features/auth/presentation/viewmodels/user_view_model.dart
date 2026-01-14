@@ -21,8 +21,10 @@ class UserViewModel extends Notifier<UserState> {
   // register method 
   Future<void> register({
     required String fullName,
+    required String username,
     required String email,
     required String password,
+    required String confirmPassword,
     String? address,
     String? phoneNumber,
   }) async {
@@ -30,7 +32,9 @@ class UserViewModel extends Notifier<UserState> {
     final registerParams = RegisterUsecaseParams(
       fullName: fullName,
       email: email,
+      username: username,
       password: password,
+      confirmPassword: confirmPassword,
       address: address,
       phoneNumber: phoneNumber,
     );
