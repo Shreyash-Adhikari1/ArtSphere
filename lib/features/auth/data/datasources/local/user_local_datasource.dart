@@ -1,4 +1,5 @@
-import 'package:artsphere/core/services/hive_service.dart';
+import 'package:artsphere/core/services/hive/hive_service.dart';
+import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
 import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,14 +7,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Local datasource Provider
 final userLocalDatasourceProvider = Provider<UserLocalDatasource>((ref) {
   final hiveService = ref.read(hiveServiceProvider);
-  return UserLocalDatasource(hiveService: hiveService);
+  final userSessionService = ref.read(userSessionServiceProvider);
+
+  return UserLocalDatasource(
+    hiveService: hiveService,
+    userSessionService: userSessionService,
+  );
 });
 
 class UserLocalDatasource implements IUserDatasource {
   final HiveService _hiveService;
+  final UserSessionService _userSessionService;
 
-  UserLocalDatasource({required HiveService hiveService})
-    : _hiveService = hiveService;
+  UserLocalDatasource({
+    required HiveService hiveService,
+    required UserSessionService userSessionService,
+  }) : _hiveService = hiveService,
+       _userSessionService = userSessionService;
 
   @override
   Future<UserHiveModel?> getCurrentUser() {
@@ -35,7 +45,17 @@ class UserLocalDatasource implements IUserDatasource {
   Future<UserHiveModel?> loginUser(String email, String password) async {
     try {
       final user = await _hiveService.loginUser(email, password);
-      return Future.value(user);
+      // saving User data in Shared Preferences
+      if (user != null) {
+        await _userSessionService.saveUserSession(
+          userId: user.userId!,
+          email: user.email,
+          fullName: user.fullName,
+          phoneNumber: user.phoneNumber,
+          address: user.address,
+        );
+      }
+      return user;
     } catch (e) {
       return Future.value(null);
     }

@@ -1,25 +1,30 @@
+import 'package:artsphere/app/routes/app_routes.dart';
+import 'package:artsphere/core/services/storage/user_session_service.dart';
+import 'package:artsphere/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart'; 
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const OnboardingScreen(),
-        ),
-      );
+      final userSessionService= ref.read(userSessionServiceProvider);
+      final isLoggedIn = userSessionService.isLoggedIn();
+      if (isLoggedIn) {
+        AppRoutes.pushReplacement(context, HomeScreen());
+      }else{
+        AppRoutes.pushReplacement(context, OnboardingScreen());
+      }
     });
   }
 
