@@ -1,3 +1,4 @@
+import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
 import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
@@ -16,6 +17,7 @@ class SignupScreen extends ConsumerStatefulWidget {
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _addressController = TextEditingController();
@@ -29,8 +31,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           .read(userViewModelProvider.notifier)
           .register(
             fullName: _fullNameController.text,
+            username: _usernameController.text,
             email: _emailController.text,
             password: _passwordController.text,
+            confirmPassword: _confirmPasswordController.text,
             address: _addressController.text,
             phoneNumber: _phoneNumberController.text
           );
@@ -46,7 +50,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           context,
           'Registration successful! Please login.',
         );
-        Navigator.of(context).pop();
+        AppRoutes.pushAndRemoveUntil(context, LoginScreen());
       } else if (next.status == UserStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
@@ -118,6 +122,36 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "Please enter your full name";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: 15),
+
+                        TextFormField(
+                          controller: _usernameController,
+                          decoration: InputDecoration(
+                            prefixIcon: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Image.asset(
+                                'assets/icons/profile_icon.png',
+                              ),
+                            ),
+                            label: Text(
+                              'Username',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            hintText: 'Enter Your Username',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(67),
+                            ),
+                            filled: true,
+                            fillColor: Color.fromARGB(44, 201, 116, 166),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your username";
                             }
                             return null;
                           },

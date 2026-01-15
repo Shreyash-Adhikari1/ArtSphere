@@ -10,19 +10,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class RegisterUsecaseParams extends Equatable {
   final String fullName;
   final String email;
+  final String username;
   final String password;
+  final String confirmPassword;
   final String? address;
   final String? phoneNumber;
   const RegisterUsecaseParams({
     required this.fullName,
     required this.email,
+    required this.username,
     required this.password,
+    required this.confirmPassword,
     this.address,
     this.phoneNumber,
   });
 
   @override
-  List<Object?> get props => [fullName, email, password, address, phoneNumber];
+  List<Object?> get props => [fullName, email,username, password, address, phoneNumber];
 }
 
 
@@ -42,8 +46,10 @@ class RegisterUsecase implements UsecaseWithParams<bool, RegisterUsecaseParams> 
   Future<Either<Failure, bool>> call(RegisterUsecaseParams params) {
     final userEntity = UserEntity(
       fullName: params.fullName,
+      username: params.username,
       email: params.email,
       password: params.password,
+      confirmPassword: params.confirmPassword,
       address: params.address,
       phoneNumber: params.phoneNumber,
     );
