@@ -1,3 +1,4 @@
+import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
 import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
@@ -49,7 +50,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           context,
           'Registration successful! Please login.',
         );
-        Navigator.of(context).pop();
+        AppRoutes.pushAndRemoveUntil(context, LoginScreen());
       } else if (next.status == UserStatus.error && next.errorMessage != null) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }

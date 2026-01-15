@@ -40,7 +40,7 @@ class UserViewModel extends Notifier<UserState> {
     );
     final result = await _registerUsecase.call(registerParams);
     result.fold((failure){
-      state.copyWith(
+      state=state.copyWith(
         status: UserStatus.error,
         errorMessage: failure.message
       );

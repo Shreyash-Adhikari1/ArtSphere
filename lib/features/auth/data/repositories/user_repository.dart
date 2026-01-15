@@ -54,15 +54,37 @@ class UserRepository implements IUserRepositroy {
     String email,
     String password,
   ) async {
-    try {
-      final user = await _userLocalDatasource.loginUser(email, password);
-      if (user != null) {
-        final userEntity = user.toEntity();
-        return Right(userEntity);
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel= await _userRemoteDatasource.loginUser(email, password);
+        if (apiModel!=null) {
+          final entity=apiModel.toEntity();
+          return Right(entity);
+        }
+        return const Left(ApiFailure(message: "Invalid Credentials"));
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "login Failed",
+            statusCode: e.response?.statusCode
+            )
+        );
+      }catch(e){
+        return Left(
+          ApiFailure(message: e.toString())
+        );
       }
-      return Left(LocalDatabaseFailure(message: "Failed to Log In User"));
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: e.toString()));
+    } else {
+      try {
+        final user = await _userLocalDatasource.loginUser(email, password);
+        if (user != null) {
+          final userEntity = user.toEntity();
+          return Right(userEntity);
+        }
+        return Left(LocalDatabaseFailure(message: "Failed to Log In User"));
+      } catch (e) {
+        return Left(LocalDatabaseFailure(message: e.toString()));
+      }
     }
   }
 
