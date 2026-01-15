@@ -38,14 +38,15 @@ class UserApiModel {
   // From JSON
 
   factory UserApiModel.fromJson(Map<String, dynamic> json) {
+    final userJson = json['user'] ?? json;  // null safety measure. the code kept throwing it because some feilds were being returned null
     return UserApiModel(
-      id: json['_id'] as String,
-      fullName: json['fullName'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      password: json['password'] as String,
-      phoneNumber: json['phoneNumber'] as String,
-      address: json['address'] as String,
+      id: userJson['_id'] as String?,
+      fullName: userJson['fullName'] as String? ?? '',
+      username: userJson['username'] as String? ?? '',
+      email: userJson['email'] as String? ?? '',
+      password: userJson['password'] as String? ?? '',
+      phoneNumber: userJson['phoneNumber'] as String? ?? '',
+      address: userJson['address'] as String? ?? '',
     );
   }
 

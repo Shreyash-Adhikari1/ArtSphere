@@ -3,8 +3,6 @@ import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
 import 'package:artsphere/features/auth/data/models/user_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // User Remote DAtasource Provider
@@ -33,9 +31,20 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
         }
       
         @override
-        Future<UserApiModel?> loginUser(String email, String password) {
-          // TODO: implement loginUser
-          throw UnimplementedError();
+        Future<UserApiModel?> loginUser(String email, String password) async{
+          final response = await _apiClient.post(
+            ApiEndpoints.userLogin,
+            data: {'email':email, 'password':password}
+          );
+          if (response.data['success']==true) {
+            final data= response.data['data'] as Map<String,dynamic>;
+            final user= UserApiModel.fromJson(data);
+
+            // save user session
+            await _userSessionService.saveUserSession(userId: user.id!, email: user.email, fullName: user.fullName, username: user.username);
+            return user;
+          }
+          return null;
         }
       
         @override
