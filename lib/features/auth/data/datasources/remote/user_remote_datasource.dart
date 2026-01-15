@@ -37,7 +37,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
             data: {'email':email, 'password':password}
           );
           if (response.data['success']==true) {
-            final data= response.data['data'] as Map<String,dynamic>;
+            final data= response.data['user'] as Map<String,dynamic>;
             final user= UserApiModel.fromJson(data);
 
             // save user session
@@ -61,7 +61,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
           );
 
           if (response.data['success']==true) {
-            final data= response.data['data'] as Map<String, dynamic>;
+            final data= response.data['user'] as Map<String, dynamic>;
             final registeredUser=UserApiModel.fromJson(data);
             return registeredUser;
           }
