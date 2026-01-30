@@ -32,6 +32,9 @@ class UserHiveModel extends HiveObject {
   @HiveField(7)
   final String? address;
 
+  @HiveField(8)
+  final String? avatar;
+
   UserHiveModel({
     String? userId,
     required this.fullName,
@@ -41,6 +44,7 @@ class UserHiveModel extends HiveObject {
     required this.confirmPassword,
     this.address,
     this.phoneNumber,
+    this.avatar,
   }) : userId = userId ?? Uuid().v4();
 
   UserEntity toEntity() {
@@ -53,6 +57,7 @@ class UserHiveModel extends HiveObject {
       confirmPassword: confirmPassword,
       address: address,
       phoneNumber: phoneNumber,
+      avatar: avatar,
     );
   }
 
