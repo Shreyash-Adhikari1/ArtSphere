@@ -13,13 +13,12 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Form exists
     expect(find.byType(Form), findsOneWidget);
 
-    // 7 input fields
+    // find the fields
     expect(find.byType(TextFormField), findsNWidgets(7));
 
-    // Labels
+    // find by labels
     expect(find.text('Full Name'), findsOneWidget);
     expect(find.text('Username'), findsOneWidget);
     expect(find.text('Email'), findsOneWidget);
@@ -28,9 +27,10 @@ void main() {
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Confirm Password'), findsOneWidget);
 
-    // Signup button
+    //Find the button with text
     expect(find.widgetWithText(ElevatedButton, 'Signup'), findsOneWidget);
 
+    // Find thr rich text and find specific texts
     final alreadyRegisteredFinder = find.byWidgetPredicate((widget) {
       if (widget is! RichText) return false;
       final text = widget.text.toPlainText();

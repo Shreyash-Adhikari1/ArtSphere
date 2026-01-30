@@ -124,7 +124,7 @@ class UserViewModel extends Notifier<UserState> {
       phoneNumber: phoneNumber,
     );
     final result = await _editProfileUsecase.call(editProfilerParams);
-    result.fold(
+    await result.fold(
       (failure) {
         state = state.copyWith(
           status: UserStatus.error,

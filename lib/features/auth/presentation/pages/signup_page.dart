@@ -36,14 +36,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             password: _passwordController.text,
             confirmPassword: _confirmPasswordController.text,
             address: _addressController.text,
-            phoneNumber: _phoneNumberController.text
+            phoneNumber: _phoneNumberController.text,
           );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-     // Listen to user state changes
+    // Listen to user state changes
     ref.listen<UserState>(userViewModelProvider, (previous, next) {
       if (next.status == UserStatus.registered) {
         SnackbarUtils.showSuccess(
@@ -208,7 +208,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return "Please enter your email";
+                              return "Please enter your phone number";
                             }
                             return null;
                           },
