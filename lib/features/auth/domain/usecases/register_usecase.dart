@@ -26,20 +26,25 @@ class RegisterUsecaseParams extends Equatable {
   });
 
   @override
-  List<Object?> get props => [fullName, email,username, password, address, phoneNumber];
+  List<Object?> get props => [
+    fullName,
+    email,
+    username,
+    password,
+    address,
+    phoneNumber,
+  ];
 }
 
-
 // Provider for register usecase.
-final registerUsecaseProvider = Provider<RegisterUsecase>((ref){
+final registerUsecaseProvider = Provider<RegisterUsecase>((ref) {
   return RegisterUsecase(userRepository: ref.read(userRepositoryProvider));
 });
 
-
-
-class RegisterUsecase implements UsecaseWithParams<bool, RegisterUsecaseParams> {
-  final IUserRepositroy _userRepositroy;
-  RegisterUsecase({required IUserRepositroy userRepository})
+class RegisterUsecase
+    implements UsecaseWithParams<bool, RegisterUsecaseParams> {
+  final IUserRepository _userRepositroy;
+  RegisterUsecase({required IUserRepository userRepository})
     : _userRepositroy = userRepository;
 
   @override
