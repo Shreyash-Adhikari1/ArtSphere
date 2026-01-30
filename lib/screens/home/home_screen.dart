@@ -1,3 +1,4 @@
+import 'package:artsphere/features/auth/presentation/pages/profile_page.dart';
 import 'package:artsphere/screens/home/challenges_screen.dart';
 import 'package:artsphere/screens/home/create_screen.dart';
 import 'package:artsphere/screens/home/discover_screen.dart';
@@ -14,11 +15,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  List<Widget> lstScreens =[
+  List<Widget> lstScreens = [
     const DiscoverScreen(),
     const CreateScreen(),
     const ChallengesScreen(),
-    const ProfileScreen(),
+    const ProfilePage(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
           ],
         ),
         child: BottomNavigationBar(
@@ -64,27 +65,24 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedItemColor: Colors.grey,
           showSelectedLabels: true,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(
               icon: Icon(Icons.add_box_outlined),
               label: "Create",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.extension),
-              label: "Challenges"
-              ),
+              label: "Challenges",
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               label: "Profile",
             ),
           ],
           currentIndex: _selectedIndex,
-          onTap:(index) {
+          onTap: (index) {
             setState(() {
-              _selectedIndex=index;
+              _selectedIndex = index;
             });
           },
         ),
