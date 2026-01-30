@@ -1,11 +1,12 @@
+import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
 import 'package:artsphere/features/auth/data/models/user_api_model.dart';
 import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
 
 abstract interface class IUserLocalDatasource {
-  Future<UserHiveModel>registerUser(UserHiveModel model);
+  Future<UserHiveModel> registerUser(UserHiveModel model);
   Future<UserHiveModel?> loginUser(String email, String password);
   Future<UserHiveModel?> getCurrentUser();
-  Future<bool>logout();
+  Future<bool> logout();
 
   // Extra Methods: Doesnt Have to be in DOMAIN LAYER repository
 
@@ -14,8 +15,11 @@ abstract interface class IUserLocalDatasource {
 }
 
 abstract interface class IUserRemoteDatasource {
-  Future<UserApiModel>registerUser(UserApiModel model);
+  Future<UserApiModel> registerUser(UserApiModel model);
   Future<UserApiModel?> getCurrentUser();
   Future<UserApiModel?> loginUser(String email, String password);
-  Future<bool>logout();
+  Future<bool> logout();
+
+  Future<UserApiModel?> getProfile();
+  Future<EditProfileApiModel> editProfile(EditProfileApiModel model);
 }
