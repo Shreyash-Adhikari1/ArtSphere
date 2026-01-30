@@ -3,9 +3,7 @@ import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/post/data/datasources/post_datasource.dart';
 import 'package:artsphere/features/post/data/models/comment/comment_api_model.dart';
 import 'package:artsphere/features/post/data/models/post/post_api_model.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 final postRemoteDatasourceProvider = Provider<IPostRemoteDatasource>((ref) {
   final apiClient = ref.read(apiClientProvider);

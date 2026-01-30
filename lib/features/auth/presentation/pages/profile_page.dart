@@ -27,22 +27,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
   }
 
-  String? _avatarToUrl(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-
-    final s = raw.trim();
-
-    // If it's a local file scheme, it's NOT a network image
-    if (s.startsWith('file://')) return null;
-
-    // Already a full URL
-    if (s.startsWith('http://') || s.startsWith('https://')) return s;
-
-    // Filename or relative path -> make it full
-    final fileName = s.split('/').last;
-    return '${ApiEndpoints.profileImages}/$fileName';
-  }
-
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);

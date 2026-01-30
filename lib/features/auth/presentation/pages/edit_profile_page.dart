@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
-import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,8 +29,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     Future.microtask(() {
       final user = ref.read(userViewModelProvider).userEntity;
       if (user != null) {
-        _fullNameController.text = user.fullName ?? '';
-        _usernameController.text = user.username ?? '';
+        _fullNameController.text = user.fullName;
+        _usernameController.text = user.username;
         _phoneController.text = user.phoneNumber ?? '';
         _addressController.text = user.address ?? '';
       }
