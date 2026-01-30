@@ -3,15 +3,17 @@ import 'package:artsphere/core/services/connectivity/network_info.dart';
 import 'package:artsphere/features/auth/data/datasources/local/user_local_datasource.dart';
 import 'package:artsphere/features/auth/data/datasources/remote/user_remote_datasource.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
+import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
 import 'package:artsphere/features/auth/data/models/user_api_model.dart';
 import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
 import 'package:artsphere/features/auth/domain/entities/user_entity.dart';
 import 'package:artsphere/features/auth/domain/repositories/user_repositroy.dart';
+import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final userRepositoryProvider = Provider<IUserRepositroy>((ref) {
+final userRepositoryProvider = Provider<IUserRepository>((ref) {
   final userLocalDatasource = ref.read(userLocalDatasourceProvider);
   final userRemoteDatasource = ref.read(userRemoteDatasourceProvider);
   final networkInfo = ref.read(networkInfoProvider);
@@ -22,7 +24,7 @@ final userRepositoryProvider = Provider<IUserRepositroy>((ref) {
   );
 });
 
-class UserRepository implements IUserRepositroy {
+class UserRepository implements IUserRepository {
   final IUserLocalDatasource _userLocalDatasource;
   final IUserRemoteDatasource _userRemoteDatasource;
   final NetworkInfo _networkInfo;
@@ -32,8 +34,8 @@ class UserRepository implements IUserRepositroy {
     required IUserRemoteDatasource userRemoteDatasource,
     required NetworkInfo networkInfo,
   }) : _userLocalDatasource = userLocalDataSource,
-      _userRemoteDatasource = userRemoteDatasource,
-      _networkInfo = networkInfo;
+       _userRemoteDatasource = userRemoteDatasource,
+       _networkInfo = networkInfo;
 
   @override
   Future<Either<Failure, UserEntity>> getCurrentUser() async {
@@ -56,9 +58,9 @@ class UserRepository implements IUserRepositroy {
   ) async {
     if (await _networkInfo.isConnected) {
       try {
-        final apiModel= await _userRemoteDatasource.loginUser(email, password);
-        if (apiModel!=null) {
-          final entity=apiModel.toEntity();
+        final apiModel = await _userRemoteDatasource.loginUser(email, password);
+        if (apiModel != null) {
+          final entity = apiModel.toEntity();
           return Right(entity);
         }
         return const Left(ApiFailure(message: "Invalid Credentials"));
@@ -66,13 +68,11 @@ class UserRepository implements IUserRepositroy {
         return Left(
           ApiFailure(
             message: e.response?.data['message'] ?? "login Failed",
-            statusCode: e.response?.statusCode
-            )
+            statusCode: e.response?.statusCode,
+          ),
         );
-      }catch(e){
-        return Left(
-          ApiFailure(message: e.toString())
-        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
       }
     } else {
       try {
@@ -133,8 +133,59 @@ class UserRepository implements IUserRepositroy {
         await _userLocalDatasource.registerUser(model);
         return Right(true);
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(ApiFailure(message: e.toString()));
       }
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> editProfile(
+    EditProfileUsecaseParams params,
+  ) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = EditProfileApiModel(
+          fullName: params.fullName,
+          username: params.username,
+          avatar: params.avatar,
+          address: params.address,
+          phoneNumber: params.phoneNumber,
+        );
+        await _userRemoteDatasource.editProfile(apiModel);
+        return const Right(true);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Edit Profile Failed",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Edit Profile"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> getProfile() async {
+    try {
+      final user = await _userRemoteDatasource.getProfile();
+      if (user != null) {
+        final userEntity = user.toEntity();
+        return Right(userEntity);
+      }
+      return Left(ApiFailure(message: "Couldnot get current user"));
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: e.response?.data['message'] ?? "Couldnt get user",
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
     }
   }
 }
