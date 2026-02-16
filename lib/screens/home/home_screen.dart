@@ -1,8 +1,7 @@
 import 'package:artsphere/features/auth/presentation/pages/profile_page.dart';
+import 'package:artsphere/features/post/presentation/pages/add_post_page.dart';
 import 'package:artsphere/screens/home/challenges_screen.dart';
-import 'package:artsphere/screens/home/create_screen.dart';
 import 'package:artsphere/screens/home/discover_screen.dart';
-import 'package:artsphere/screens/home/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> lstScreens = [
     const DiscoverScreen(),
-    const CreateScreen(),
+    const AddPostPage(),
     const ChallengesScreen(),
     const ProfilePage(),
   ];
