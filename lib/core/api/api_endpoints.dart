@@ -38,8 +38,11 @@ class ApiEndpoints {
   // ============= Post Endpoints =============
   static const String posts = '/post';
   static const String createPost = '/post/create';
-  static const String getPosts = '/post/posts';
-  static String getPostsByUser(String id) => '/post/posts/$id';
+  static const String editPost = '/post/edit';
+  static const String getFeed = '/post/posts';
+  static const String getMyPosts = '/post/posts/my-posts';
+  static const String getFollowingFeed = '/post/posts/following';
+  static String getPostsByUser(String id) => '/post/user/$id';
   static String deletePost(String id) => 'post/delete/$id';
   static String likePost(String id) => 'post/like/$id';
   static String unlikePost(String id) => 'post/unlike/$id';
