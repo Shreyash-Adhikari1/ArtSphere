@@ -11,26 +11,31 @@ class PostViewmodel extends Notifier<PostState> {
   late final CreatePostUsecase _createPostUsecase;
 
   @override
-  build() {
+  PostState build() {
     _createPostUsecase = ref.read(createPostUsecaseProvider);
-    return PostState();
+    return const PostState();
   }
 
-  // create post method
   Future<void> createPost({
-    String? media,
-    String? mediaType,
+    required String mediaPath,
+    String mediaType = "image",
     String? caption,
     List<String>? tags,
+    String visibility = "public",
   }) async {
-    state = state.copyWith(status: PostStatus.loading);
-    final createPostParams = CreatePostUsecaseParams(
-      media: media,
+    // start loading + clear old error
+    state = state.copyWith(status: PostStatus.loading, errorMessage: null);
+
+    final params = CreatePostUsecaseParams(
+      mediaPath: mediaPath,
       mediaType: mediaType,
       caption: caption,
       tags: tags,
+      visibility: visibility,
     );
-    final result = await _createPostUsecase.call(createPostParams);
+
+    final result = await _createPostUsecase.call(params);
+
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -38,15 +43,11 @@ class PostViewmodel extends Notifier<PostState> {
           errorMessage: failure.message,
         );
       },
-      (isCreated) {
-        if (isCreated) {
-          state = state.copyWith(status: PostStatus.created);
-        } else {
-          state = state.copyWith(
-            status: PostStatus.error,
-            errorMessage: "Create Post Failed",
-          );
-        }
+      (createdPost) {
+        state = state.copyWith(
+          status: PostStatus.created,
+          postEntity: createdPost,
+        );
       },
     );
   }

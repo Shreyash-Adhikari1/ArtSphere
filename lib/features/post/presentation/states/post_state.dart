@@ -20,12 +20,13 @@ class PostState extends Equatable {
     PostEntity? postEntity,
     List<PostEntity>? posts,
     String? errorMessage,
+    bool clearError = false,
   }) {
     return PostState(
       status: status ?? this.status,
       postEntity: postEntity ?? this.postEntity,
       posts: posts ?? this.posts,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
