@@ -1,6 +1,8 @@
-import 'package:artsphere/features/auth/data/models/user_api_model.dart';
+import 'package:artsphere/features/post/data/models/post/helper/author_converter.dart';
+import 'package:artsphere/features/post/data/models/post/post_author/post_author_api_model.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 
 part 'post_api_model.g.dart';
 
@@ -8,7 +10,10 @@ part 'post_api_model.g.dart';
 class PostApiModel {
   @JsonKey(name: "_id")
   final String? postId;
-  final UserApiModel? author;
+
+  @JsonKey(fromJson: AuthorConverter.fromJson, toJson: AuthorConverter.toJson)
+  final PostAuthorApiModel? author;
+
   final String? media;
   final String? mediaType;
   final String? caption;
@@ -33,36 +38,37 @@ class PostApiModel {
     this.commentedBy,
   });
 
-  // From Json [Usinbg Json Serializable]
   factory PostApiModel.fromJson(Map<String, dynamic> json) =>
       _$PostApiModelFromJson(json);
-  // To Json
+
   Map<String, dynamic> toJson() => _$PostApiModelToJson(this);
 
-  //   To Entity
   PostEntity toEntity() {
     return PostEntity(
       postId: postId,
       author: author?.toEntity(),
       media: media,
       mediaType: mediaType,
-      caption: caption ?? "",
-      tags: tags ?? [],
+      caption: caption,
+      tags: tags,
       visibility: visibility,
-      likeCount: likeCount ?? 0,
-      likedBy: likedBy ?? [],
-      commentCount: commentCount ?? 0,
-      commentedBy: commentedBy ?? [],
+      likeCount: likeCount,
+      likedBy: likedBy,
+      commentCount: commentCount,
+      commentedBy: commentedBy,
     );
   }
 
-  //   From Entity
   factory PostApiModel.fromEntity(PostEntity post) {
     return PostApiModel(
       postId: post.postId,
       author: post.author == null
           ? null
-          : UserApiModel.fromEntity(post.author!),
+          : PostAuthorApiModel(
+              id: post.author!.userId,
+              username: post.author!.username,
+              avatar: post.author!.avatar,
+            ),
       media: post.media,
       mediaType: post.mediaType,
       caption: post.caption,
@@ -73,10 +79,5 @@ class PostApiModel {
       commentCount: post.commentCount,
       commentedBy: post.commentedBy,
     );
-  }
-
-  // To Entity List
-  static List<PostEntity> toEntityList(List<PostApiModel> model) {
-    return model.map((model) => model.toEntity()).toList();
   }
 }

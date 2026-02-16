@@ -8,9 +8,7 @@ part of 'post_api_model.dart';
 
 PostApiModel _$PostApiModelFromJson(Map<String, dynamic> json) => PostApiModel(
       postId: json['_id'] as String?,
-      author: json['author'] == null
-          ? null
-          : UserApiModel.fromJson(json['author'] as Map<String, dynamic>),
+      author: AuthorConverter.fromJson(json['author']),
       media: json['media'] as String?,
       mediaType: json['mediaType'] as String?,
       caption: json['caption'] as String?,
@@ -28,7 +26,7 @@ PostApiModel _$PostApiModelFromJson(Map<String, dynamic> json) => PostApiModel(
 Map<String, dynamic> _$PostApiModelToJson(PostApiModel instance) =>
     <String, dynamic>{
       '_id': instance.postId,
-      'author': instance.author,
+      'author': AuthorConverter.toJson(instance.author),
       'media': instance.media,
       'mediaType': instance.mediaType,
       'caption': instance.caption,
