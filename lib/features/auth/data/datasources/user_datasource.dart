@@ -1,6 +1,6 @@
-import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
+import 'package:artsphere/features/auth/data/models/edit_user/edit_profile_api_model.dart';
+import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
+import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
 
 abstract interface class IUserLocalDatasource {
   Future<UserHiveModel> registerUser(UserHiveModel model);

@@ -3,8 +3,8 @@ import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
-import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_api_model.dart';
+import 'package:artsphere/features/auth/data/models/edit_user/edit_profile_api_model.dart';
+import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
