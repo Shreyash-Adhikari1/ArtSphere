@@ -1,6 +1,7 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:artsphere/features/post/presentation/states/post_state.dart';
@@ -20,31 +21,97 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      ref.read(userViewModelProvider.notifier).getProfile();
-      // later:
-      // ref.read(postViewModelProvider.notifier).getMyPosts();
+    Future.microtask(() async {
+      await ref.read(userViewModelProvider.notifier).getProfile();
+      // TODO: when your getMyPosts is ready:
+      // await ref.read(postViewModelProvider.notifier).getMyPosts();
     });
+  }
+
+  Future<void> _confirmLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Do you want to log out?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => AppRoutes.pushReplacement(context, LoginScreen()),
+            child: const Text("Logout"),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    await ref.read(userViewModelProvider.notifier).logout();
+
+    if (!mounted) return;
+
+    // Replace this with your real login route
+    Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
+    // or if you prefer your AppRoutes helper:
+    // AppRoutes.pushAndRemoveUntilNamed(context, "/login");
   }
 
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    // final postState = ref.watch(postViewModelProvider);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Profile"),
-        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0.2,
+        title: const Text(
+          "Profile",
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: navigate to settings
+          PopupMenuButton<_ProfileMenuAction>(
+            icon: const Icon(Icons.settings, color: Colors.black),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            onSelected: (action) async {
+              if (action == _ProfileMenuAction.editProfile) {
+                AppRoutes.push(context, const EditProfilePage());
+              } else if (action == _ProfileMenuAction.logout) {
+                await _confirmLogout();
+              }
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _ProfileMenuAction.editProfile,
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 10),
+                    Text("Edit profile"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: _ProfileMenuAction.logout,
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 18, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text("Logout", style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
+
       body: userState.status == UserStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : userState.userEntity == null
@@ -52,89 +119,115 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(userViewModelProvider.notifier).getProfile();
+                // await ref.read(postViewModelProvider.notifier).getMyPosts();
               },
-              child: SingleChildScrollView(
+              child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
+                slivers: [
+                  SliverToBoxAdapter(child: _ProfileHeader()),
 
-                    /// PROFILE HEADER
-                    _ProfileHeader(),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                    const SizedBox(height: 16),
-                    const Divider(),
+                  const SliverToBoxAdapter(child: _ProfileTabs()),
 
-                    /// TABS (icons row like your design)
-                    _ProfileTabs(),
+                  const SliverToBoxAdapter(child: Divider(height: 1)),
 
-                    const Divider(),
-
-                    /// POSTS GRID
-                    _PostsGrid(),
-                  ],
-                ),
+                  _PostsGrid(),
+                  const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                ],
               ),
             ),
     );
   }
 }
 
+enum _ProfileMenuAction { editProfile, logout }
+
 class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader();
+
+  String? _resolveAvatarUrl(String? avatar) {
+    if (avatar == null || avatar.trim().isEmpty) return null;
+
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+      return avatar;
+    }
+
+    // If backend stores full path, keep only last segment
+    final fileName = avatar.split('/').last;
+    return '${ApiEndpoints.profileImages}/$fileName';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userViewModelProvider).userEntity!;
+    final avatarUrl = _resolveAvatarUrl(user.avatar);
 
-    final avatar = user.avatar;
-    final String? avatarUrl = (avatar == null || avatar.trim().isEmpty)
-        ? null
-        : (avatar.startsWith('http://') || avatar.startsWith('https://'))
-        ? avatar
-        : '${ApiEndpoints.profileImages}/${avatar.split('/').last}';
+    final posts = user.postCount ?? 0;
+    final following = user.followingCount ?? 0;
+    final followers = user.followerCount ?? 0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Avatar + stats row (Instagram-ish)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: Colors.grey.shade300,
-                backgroundImage: avatarUrl != null
-                    ? NetworkImage(avatarUrl)
-                    : null,
-                child: avatarUrl == null
-                    ? const Icon(Icons.person, size: 40)
-                    : null,
-              ),
-
-              const SizedBox(width: 24),
-
-              Text(
-                "@${user.username}",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.redAccent,
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFF58529),
+                      Color(0xFFDD2A7B),
+                      Color(0xFF8134AF),
+                      Color(0xFF515BD4),
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: avatarUrl != null
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl == null
+                        ? const Icon(
+                            Icons.person,
+                            size: 38,
+                            color: Colors.black54,
+                          )
+                        : null,
+                  ),
                 ),
               ),
+
+              const SizedBox(width: 18),
 
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
+                    _ProfileStat(title: "Posts", value: posts.toString()),
                     _ProfileStat(
-                      title: "posts",
-                      value: user.followerCount.toString(),
+                      title: "Followers",
+                      value: followers.toString(),
                     ),
                     _ProfileStat(
-                      title: "following",
-                      value: user.followingCount.toString(),
-                    ),
-                    _ProfileStat(
-                      title: "followers",
-                      value: user.postCount.toString(),
+                      title: "Following",
+                      value: following.toString(),
                     ),
                   ],
                 ),
@@ -142,11 +235,54 @@ class _ProfileHeader extends ConsumerWidget {
             ],
           ),
 
-          TextButton(
-            onPressed: () {
-              AppRoutes.push(context, const EditProfilePage());
-            },
-            child: const Text("Edit Profile"),
+          const SizedBox(height: 14),
+
+          Text(
+            "@${user.username}",
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: Colors.black,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            user.fullName,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Buttons row
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    AppRoutes.push(context, const EditProfilePage());
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    "Edit Profile",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -166,67 +302,149 @@ class _ProfileStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: Colors.black,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(title, style: const TextStyle(color: Colors.grey)),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _ProfileTabs extends StatelessWidget {
+  const _ProfileTabs();
+
   @override
   Widget build(BuildContext context) {
+    // For now just visual tabs
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: const [
-          Icon(Icons.grid_view_rounded),
-          Icon(Icons.favorite_border),
-          Icon(Icons.bookmark_border),
+          _TabIcon(icon: Icons.grid_on_rounded, active: true),
+          _TabIcon(icon: Icons.favorite_border),
+          _TabIcon(icon: Icons.bookmark_border),
         ],
       ),
     );
   }
 }
 
+class _TabIcon extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+
+  const _TabIcon({required this.icon, this.active = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: active ? Colors.black : Colors.grey.shade500),
+        const SizedBox(height: 8),
+        Container(
+          height: 2,
+          width: 28,
+          color: active ? Colors.black : Colors.transparent,
+        ),
+      ],
+    );
+  }
+}
+
 class _PostsGrid extends ConsumerWidget {
+  const _PostsGrid();
+
+  String _resolvePostMediaUrl(String media) {
+    // If backend already returns full URL
+    if (media.startsWith("http://") || media.startsWith("https://"))
+      return media;
+
+    // Adjust this to match your backend uploads path
+    // Example: ApiEndpoints.postImages = "http://localhost:5000/uploads/post-images"
+    // If you don’t have ApiEndpoints.postImages, create it.
+    if (media.startsWith("/uploads/")) return "${ApiEndpoints.baseUrl}$media";
+
+    // Default: assume normal posts are in /uploads/post-images
+    return "${ApiEndpoints.baseUrl}/uploads/post-images/$media";
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final postState = ref.watch(postViewModelProvider);
 
     if (postState.status == PostStatus.loading) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: CircularProgressIndicator(),
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     final posts = postState.posts;
 
     if (posts.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
-        child: Text("No posts yet"),
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: Text("No posts yet")),
+        ),
       );
     }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return SliverPadding(
       padding: const EdgeInsets.all(2),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 2,
+          crossAxisSpacing: 2,
+          childAspectRatio: 1,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final post = posts[index];
+          final media = post.media;
+
+          if (media == null || media.trim().isEmpty) {
+            return Container(
+              color: Colors.grey.shade200,
+              child: const Center(child: Icon(Icons.image_not_supported)),
+            );
+          }
+
+          final url = _resolvePostMediaUrl(media);
+
+          return InkWell(
+            onTap: () {
+              // TODO: open post details modal
+            },
+            child: Container(
+              color: Colors.grey.shade200,
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(child: Icon(Icons.broken_image)),
+                ),
+              ),
+            ),
+          );
+        }, childCount: posts.length),
       ),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return Image.network(post.media!, fit: BoxFit.cover);
-      },
     );
   }
 }
