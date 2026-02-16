@@ -31,6 +31,22 @@ class UserEntity extends Equatable {
     this.posts,
   });
 
+  /// i Added this olely for post, to get the author object that backend sends
+  ///the required fields are filled with safe defaults.
+  ///i did this to properly handle post logics api response as creation sends just the author:_id
+  /// while other get operations send author:{_i, username , avatar}
+  const UserEntity.preview({this.userId, required this.username, this.avatar})
+    : fullName = "",
+      email = "",
+      password = "",
+      confirmPassword = "",
+      phoneNumber = null,
+      address = null,
+      followerCount = null,
+      followingCount = null,
+      postCount = null,
+      posts = null;
+
   @override
   List<Object?> get props => [
     userId,
