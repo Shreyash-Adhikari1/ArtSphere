@@ -1,9 +1,10 @@
 import 'package:artsphere/features/post/data/models/comment/comment_api_model.dart';
+import 'package:artsphere/features/post/data/models/post/create/create_post_api_model.dart';
 import 'package:artsphere/features/post/data/models/post/post_api_model.dart';
 
 abstract interface class IPostRemoteDatasource {
   // Posts
-  Future<PostApiModel> createPost(PostApiModel post);
+  Future<PostApiModel> createPost(CreatePostApiModel post, String mediaPath);
   Future<PostApiModel> likePost(String postId, String userId);
   Future<PostApiModel> unlikePost(String postId, String userId);
   Future<List<PostApiModel>> getPostsByUser(String userId);
