@@ -9,6 +9,7 @@ class UserEntity extends Equatable {
   final String? confirmPassword;
   final String? phoneNumber;
   final String? address;
+  final String? bio;
   final String? avatar;
   final int? followerCount;
   final int? followingCount;
@@ -24,6 +25,7 @@ class UserEntity extends Equatable {
     required this.confirmPassword,
     this.address,
     this.phoneNumber,
+    this.bio,
     this.avatar,
     this.followerCount,
     this.followingCount,
@@ -40,6 +42,7 @@ class UserEntity extends Equatable {
       email = "",
       password = "",
       confirmPassword = "",
+      bio = "",
       phoneNumber = null,
       address = null,
       followerCount = null,
@@ -57,6 +60,7 @@ class UserEntity extends Equatable {
     address,
     phoneNumber,
     avatar,
+    bio,
     followerCount,
     followingCount,
     postCount,

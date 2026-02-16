@@ -15,6 +15,7 @@ class UserApiModel {
   final String? phoneNumber;
   final String? address;
   final String? avatar;
+  final String? bio;
   final int? followerCount;
   final int? followingCount;
   final int? postCount;
@@ -30,6 +31,7 @@ class UserApiModel {
     this.phoneNumber,
     this.address,
     this.avatar,
+    this.bio,
     this.followerCount,
     this.followingCount,
     this.postCount,
@@ -82,6 +84,7 @@ class UserApiModel {
       address: address,
       phoneNumber: phoneNumber,
       avatar: avatar,
+      bio: bio,
       followerCount: followerCount,
       followingCount: followingCount,
       postCount: postCount,
@@ -100,6 +103,7 @@ class UserApiModel {
       phoneNumber: entity.phoneNumber,
       address: entity.address,
       avatar: entity.avatar,
+      bio: entity.bio,
       followerCount: entity.followerCount,
       followingCount: entity.followingCount,
       postCount: entity.postCount,

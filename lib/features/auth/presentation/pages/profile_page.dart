@@ -40,7 +40,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () => AppRoutes.pushReplacement(context, LoginScreen()),
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Logout"),
           ),
         ],
@@ -52,11 +52,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     await ref.read(userViewModelProvider.notifier).logout();
 
     if (!mounted) return;
-
-    // Replace this with your real login route
-    Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
-    // or if you prefer your AppRoutes helper:
-    // AppRoutes.pushAndRemoveUntilNamed(context, "/login");
+    AppRoutes.pushAndRemoveUntil(context, LoginScreen());
   }
 
   @override
@@ -255,8 +251,20 @@ class _ProfileHeader extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+          if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
+            Text(
+              user.bio!,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade800,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 14),
+          ] else ...[
+            const SizedBox(height: 14),
+          ],
 
           // Buttons row
           Row(
