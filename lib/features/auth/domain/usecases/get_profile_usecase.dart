@@ -16,6 +16,6 @@ class GetProfileUsecase implements UsecaseWithoutParams<UserEntity> {
     : _userRepository = userRepository;
   @override
   Future<Either<Failure, UserEntity>> call() {
-    return _userRepository.getProfile();
+    return _userRepository.getMyProfile();
   }
 }

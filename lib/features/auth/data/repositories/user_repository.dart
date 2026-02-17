@@ -169,7 +169,7 @@ class UserRepository implements IUserRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> getProfile() async {
+  Future<Either<Failure, UserEntity>> getMyProfile() async {
     try {
       final user = await _userRemoteDatasource.getProfile();
       if (user != null) {
@@ -187,5 +187,11 @@ class UserRepository implements IUserRepository {
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> getUsersProfile(String userId) {
+    // TODO: implement getUsersProfile
+    throw UnimplementedError();
   }
 }
