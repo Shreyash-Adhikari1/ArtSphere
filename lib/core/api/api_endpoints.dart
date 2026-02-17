@@ -38,7 +38,7 @@ class ApiEndpoints {
   // ============= Post Endpoints =============
   static const String posts = '/post';
   static const String createPost = '/post/create';
-  static const String editPost = '/post/edit';
+  static String editPost(String id) => '/post/edit/$id';
   static const String getFeed = '/post/posts';
   static const String getMyPosts = '/post/posts/my-posts';
   static const String getFollowingFeed = '/post/posts/following';

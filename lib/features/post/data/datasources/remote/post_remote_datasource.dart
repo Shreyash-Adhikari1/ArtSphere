@@ -1,10 +1,8 @@
 import 'dart:io';
-
 import 'package:artsphere/core/api/api_client.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/features/post/data/datasources/post_datasource.dart';
-import 'package:artsphere/features/comment/data/models/comment_api_model.dart';
 import 'package:artsphere/features/post/data/models/create/create_post_api_model.dart';
 import 'package:artsphere/features/post/data/models/edit/edit_post_api_model.dart';
 import 'package:artsphere/features/post/data/models/post_api_model.dart';
@@ -70,50 +68,133 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
   }
 
   @override
-  Future<bool> deletePost(String postId) {
-    // TODO: implement deletePost
-    throw UnimplementedError();
+  Future<EditPostApiModel> editPost(
+    String postId,
+    EditPostApiModel post,
+  ) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.patch(
+      ApiEndpoints.editPost(postId),
+      data: post.toJson(),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    if (response.data["success"] == true) {
+      final data = response.data["post"] as Map<String, dynamic>;
+      final editedPost = EditPostApiModel.fromJson(data);
+      return editedPost;
+    }
+    throw Exception(response.data["message"] ?? "Failed to edit post");
   }
 
   @override
-  Future<PostApiModel> editPost(EditPostApiModel post) {
-    // TODO: implement editPost
-    throw UnimplementedError();
+  Future<List<PostApiModel>> getFeed() async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.getFeed,
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data["success"] == true) {
+      final List data = response.data["posts"] as List;
+      final posts = data
+          .map((json) => PostApiModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      return posts;
+    }
+    throw Exception(response.data["message"] ?? "Failed to fetch feed");
   }
 
   @override
-  Future<List<PostApiModel>> getFeed() {
-    // TODO: implement getFeed
-    throw UnimplementedError();
+  Future<List<PostApiModel>> getFollowingFeed() async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.getFollowingFeed,
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data["success"] == true) {
+      final List data = response.data["posts"] as List;
+      final posts = data
+          .map((json) => PostApiModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      return posts;
+    }
+    throw Exception(response.data["message"] ?? "Failed to fetch feed");
   }
 
   @override
-  Future<List<PostApiModel>> getFollowingFeed() {
-    // TODO: implement getFollowingFeed
-    throw UnimplementedError();
+  Future<List<PostApiModel>> getMyPosts() async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.getMyPosts,
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data['success'] == true) {
+      final List data = response.data["posts"] as List;
+      final posts = data
+          .map((json) => PostApiModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      return posts;
+    }
+    throw Exception(
+      response.data['message'] ?? "Failed t0 fetch following feed",
+    );
   }
 
   @override
-  Future<List<PostApiModel>> getMyPosts() {
-    // TODO: implement getMyPosts
-    throw UnimplementedError();
+  Future<List<PostApiModel>> getPostsByUser(String userId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.getPostsByUser(userId),
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data['success'] == true) {
+      final List<dynamic> data =
+          response.data["posts"] as List<Map<String, dynamic>>;
+      final posts = data
+          .map((json) => PostApiModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      return posts;
+    }
+    throw Exception(
+      response.data['message'] ?? "Failed to fetch posts by user",
+    );
   }
 
   @override
-  Future<List<PostApiModel>> getPostsByUser(String userId) {
-    // TODO: implement getPostsByUser
-    throw UnimplementedError();
+  Future<bool> deletePost(String postId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.delete(
+      ApiEndpoints.deletePost(postId),
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data["success"] == true) {
+      return true;
+    }
+    throw Exception(response.data["message"] ?? "Failed to delete post");
   }
 
   @override
-  Future<PostApiModel> likePost(String postId, String userId) {
-    // TODO: implement likePost
-    throw UnimplementedError();
+  Future<bool> likePost(String postId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.post(
+      ApiEndpoints.likePost(postId),
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data["success"] == true) {
+      return true;
+    }
+    throw Exception(response.data["message"] ?? "Failed to like post");
   }
 
   @override
-  Future<PostApiModel> unlikePost(String postId, String userId) {
-    // TODO: implement unlikePost
-    throw UnimplementedError();
+  Future<bool> unlikePost(String postId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.post(
+      ApiEndpoints.unlikePost(postId),
+      options: Options(headers: {'Authorization': "Bearer $token"}),
+    );
+    if (response.data["success"] == true) {
+      return true;
+    }
+    throw Exception(response.data["message"] ?? "Failed to unlike post");
   }
 }
