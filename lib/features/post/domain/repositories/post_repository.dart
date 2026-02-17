@@ -22,7 +22,7 @@ abstract interface class IPostRepository {
   // Delete
   Future<Either<Failure, bool>> deletePost(String postId);
 
-  //Delete
-  Future<Either<Failure, PostEntity>> likePost(String postId, String userId);
-  Future<Either<Failure, PostEntity>> unlikePost(String postId, String userId);
+  //Like/Unlike
+  Future<Either<Failure, bool>> likePost(String postId);
+  Future<Either<Failure, bool>> unlikePost(String postId);
 }
