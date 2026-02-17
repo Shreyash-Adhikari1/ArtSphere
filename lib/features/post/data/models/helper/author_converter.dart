@@ -1,4 +1,4 @@
-import 'package:artsphere/features/post/data/models/post/post_author/post_author_api_model.dart';
+import 'package:artsphere/features/post/data/models/post_author/post_author_api_model.dart';
 
 /// This file is a helper module created for only one purpose
 /// To tell dart if api response sends only author:_id

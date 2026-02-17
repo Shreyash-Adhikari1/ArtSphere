@@ -1,8 +1,7 @@
-import 'package:artsphere/features/post/data/models/post/helper/author_converter.dart';
-import 'package:artsphere/features/post/data/models/post/post_author/post_author_api_model.dart';
+import 'package:artsphere/features/post/data/models/helper/author_converter.dart';
+import 'package:artsphere/features/post/data/models/post_author/post_author_api_model.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
 
 part 'post_api_model.g.dart';
 

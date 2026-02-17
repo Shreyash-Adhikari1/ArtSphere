@@ -1,5 +1,5 @@
 import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
-import 'package:artsphere/features/post/domain/entities/comment_entity.dart';
+import 'package:artsphere/features/comment/domain/entities/comment_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'comment_api_model.g.dart';

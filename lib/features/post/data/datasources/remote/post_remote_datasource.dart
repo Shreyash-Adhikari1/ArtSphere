@@ -4,9 +4,10 @@ import 'package:artsphere/core/api/api_client.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/features/post/data/datasources/post_datasource.dart';
-import 'package:artsphere/features/post/data/models/comment/comment_api_model.dart';
-import 'package:artsphere/features/post/data/models/post/create/create_post_api_model.dart';
-import 'package:artsphere/features/post/data/models/post/post_api_model.dart';
+import 'package:artsphere/features/comment/data/models/comment_api_model.dart';
+import 'package:artsphere/features/post/data/models/create/create_post_api_model.dart';
+import 'package:artsphere/features/post/data/models/edit/edit_post_api_model.dart';
+import 'package:artsphere/features/post/data/models/post_api_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,42 +70,32 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
   }
 
   @override
-  Future<CommentApiModel> createComment(CommentApiModel comment) async {
-    // TODO: implement createComment
-    throw UnimplementedError();
-    // final response = await _apiClient.post(
-    //   ApiEndpoints.createComment(id),
-    //   data:comment.toJson()
-    // );
-    // if
-  }
-
-  @override
-  Future<bool> deleteComment(String commentId) {
-    // TODO: implement deleteComment
+  Future<bool> deletePost(String postId) {
+    // TODO: implement deletePost
     throw UnimplementedError();
   }
 
   @override
-  Future<bool> deletePost(String postId) async {
-    final response = await _apiClient.delete(ApiEndpoints.deletePost(postId));
-
-    if (response.data['success'] == true) {
-      return true;
-    } else {
-      throw Exception(response.data['message'] ?? 'Failed to delete post');
-    }
-  }
-
-  @override
-  Future<CommentApiModel> getCommentById(String commentId) {
-    // TODO: implement getCommentById
+  Future<PostApiModel> editPost(EditPostApiModel post) {
+    // TODO: implement editPost
     throw UnimplementedError();
   }
 
   @override
-  Future<List<CommentApiModel>> getCommentsByUser(String userId) {
-    // TODO: implement getCommentsByUser
+  Future<List<PostApiModel>> getFeed() {
+    // TODO: implement getFeed
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<PostApiModel>> getFollowingFeed() {
+    // TODO: implement getFollowingFeed
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<PostApiModel>> getMyPosts() {
+    // TODO: implement getMyPosts
     throw UnimplementedError();
   }
 
@@ -115,20 +106,8 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
   }
 
   @override
-  Future<CommentApiModel> likeComment(String commentId, String userId) {
-    // TODO: implement likeComment
-    throw UnimplementedError();
-  }
-
-  @override
   Future<PostApiModel> likePost(String postId, String userId) {
     // TODO: implement likePost
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<CommentApiModel> unlikeComment(String commentId, String userId) {
-    // TODO: implement unlikeComment
     throw UnimplementedError();
   }
 

@@ -2,9 +2,10 @@ import 'package:artsphere/core/error/failures.dart';
 import 'package:artsphere/core/services/connectivity/network_info.dart';
 import 'package:artsphere/features/post/data/datasources/post_datasource.dart';
 import 'package:artsphere/features/post/data/datasources/remote/post_remote_datasource.dart';
-import 'package:artsphere/features/post/data/models/post/create/create_post_api_model.dart';
+import 'package:artsphere/features/post/data/models/create/create_post_api_model.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:artsphere/features/post/domain/repositories/post_repository.dart';
+import 'package:artsphere/features/post/domain/usecases/edit_post_usecase.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,26 +66,38 @@ class PostRepository implements IPostRepository {
   }
 
   @override
-  Future<Either<Failure, PostEntity>> commentOnPost(
-    String postId,
-    String userId,
-  ) {
-    // TODO: implement commentOnPost
+  Future<Either<Failure, bool>> deletePost(String postId) {
+    // TODO: implement deletePost
     throw UnimplementedError();
   }
 
   @override
-  Future<Either<Failure, PostEntity>> deleteComment(
-    String postId,
-    String userId,
-  ) {
-    // TODO: implement deleteComment
+  Future<Either<Failure, bool>> editPost(EditPostUsecaseParams params) {
+    // TODO: implement editPost
     throw UnimplementedError();
   }
 
   @override
-  Future<Either<Failure, List<PostEntity>>> getMyPosts(String userId) {
+  Future<Either<Failure, List<PostEntity>>> getFeed() {
+    // TODO: implement getFeed
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<PostEntity>>> getFollowingFeed() {
+    // TODO: implement getFollowingFeed
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<PostEntity>>> getMyPosts() {
     // TODO: implement getMyPosts
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<PostEntity>>> getUsersPosts(String userId) {
+    // TODO: implement getUsersPosts
     throw UnimplementedError();
   }
 
@@ -97,12 +110,6 @@ class PostRepository implements IPostRepository {
   @override
   Future<Either<Failure, PostEntity>> unlikePost(String postId, String userId) {
     // TODO: implement unlikePost
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, bool>> deletePost(String postId) {
-    // TODO: implement deletePost
     throw UnimplementedError();
   }
 }
