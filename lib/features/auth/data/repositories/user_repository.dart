@@ -171,7 +171,7 @@ class UserRepository implements IUserRepository {
   @override
   Future<Either<Failure, UserEntity>> getMyProfile() async {
     try {
-      final user = await _userRemoteDatasource.getProfile();
+      final user = await _userRemoteDatasource.getMyProfile();
       if (user != null) {
         final userEntity = user.toEntity();
         return Right(userEntity);

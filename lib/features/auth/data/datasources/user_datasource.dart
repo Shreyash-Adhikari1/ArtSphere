@@ -20,6 +20,7 @@ abstract interface class IUserRemoteDatasource {
   Future<UserApiModel?> loginUser(String email, String password);
   Future<bool> logout();
 
-  Future<UserApiModel?> getProfile();
+  Future<UserApiModel?> getMyProfile();
+  Future<UserApiModel?> getUsersProfile(String userId);
   Future<EditProfileApiModel> editProfile(EditProfileApiModel model);
 }

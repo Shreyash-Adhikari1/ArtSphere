@@ -32,7 +32,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
        _tokenService = tokenService;
 
   @override
-  Future<UserApiModel?> getProfile() async {
+  Future<UserApiModel?> getMyProfile() async {
     final token = _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getProfile,
@@ -128,6 +128,12 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
   @override
   Future<UserApiModel?> getCurrentUser() {
     // TODO: implement getCurrentUser
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<UserApiModel?> getUsersProfile(String userId) {
+    // TODO: implement getUsersProfile
     throw UnimplementedError();
   }
 }
