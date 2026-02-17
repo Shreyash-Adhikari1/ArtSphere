@@ -79,4 +79,9 @@ class PostApiModel {
       commentedBy: post.commentedBy,
     );
   }
+
+  // To Entity List
+  static List<PostEntity> toEntityList(List<PostApiModel> model) {
+    return model.map((model) => model.toEntity()).toList();
+  }
 }
