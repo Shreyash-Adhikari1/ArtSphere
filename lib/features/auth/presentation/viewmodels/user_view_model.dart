@@ -1,5 +1,6 @@
 import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/get_profile_usecase.dart';
+import 'package:artsphere/features/auth/domain/usecases/get_users_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/login_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/register_usecase.dart';
@@ -17,6 +18,7 @@ class UserViewModel extends Notifier<UserState> {
   late final GetProfileUsecase _getProfileUsecase;
   late final EditProfileUsecase _editProfileUsecase;
   late final LogoutUsecase _logoutUsecase;
+  late final GetUsersProfileUsecase _getUsersProfileUsecase;
 
   @override
   build() {
@@ -25,6 +27,7 @@ class UserViewModel extends Notifier<UserState> {
     _getProfileUsecase = ref.read(getProfileUsecaseProvider);
     _editProfileUsecase = ref.read(editProfileUsecaseProvider);
     _logoutUsecase = ref.read(logoutUsecaseProvider);
+    _getUsersProfileUsecase = ref.read(getUsersProfileUsecaseProvider);
 
     Future.microtask(() => getProfile());
     return UserState();
@@ -136,6 +139,28 @@ class UserViewModel extends Notifier<UserState> {
       },
       (profile) {
         state = state.copyWith(status: UserStatus.success, userEntity: profile);
+      },
+    );
+  }
+
+  Future<void> getUsersProfile(String userId) async {
+    state = state.copyWith(status: UserStatus.loading);
+    final result = await _getUsersProfileUsecase(
+      GetUsersProfileUsecaseParams(userId: userId),
+    );
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: UserStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (profile) {
+        state = state.copyWith(
+          status: UserStatus.success,
+          viewingUserEntity: profile,
+        );
       },
     );
   }
