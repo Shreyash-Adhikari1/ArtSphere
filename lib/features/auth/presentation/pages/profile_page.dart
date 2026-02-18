@@ -5,6 +5,7 @@ import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
+import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
 import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,9 +131,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ProfilePostGrid(
                     posts: ref.watch(postViewModelProvider).myPosts,
                     loading: ref.watch(postViewModelProvider).myPostsLoading,
-                    onTapPost: (post) {
-                      // TODO: open post details modal
-                    },
+                    onTapPost: (post) => showPostDetailsModal(context, post),
                   ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
