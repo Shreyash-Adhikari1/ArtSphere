@@ -132,8 +132,17 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
   }
 
   @override
-  Future<UserApiModel?> getUsersProfile(String userId) {
-    // TODO: implement getUsersProfile
-    throw UnimplementedError();
+  Future<UserApiModel?> getUsersProfile(String userId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.userById(userId),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    if (response.data['success'] == true) {
+      final data = response.data['user'] as Map<String, dynamic>;
+      final user = UserApiModel.fromJson(data);
+      return user;
+    }
+    return null;
   }
 }

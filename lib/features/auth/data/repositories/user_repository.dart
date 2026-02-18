@@ -170,28 +170,51 @@ class UserRepository implements IUserRepository {
 
   @override
   Future<Either<Failure, UserEntity>> getMyProfile() async {
-    try {
-      final user = await _userRemoteDatasource.getMyProfile();
-      if (user != null) {
-        final userEntity = user.toEntity();
-        return Right(userEntity);
+    if (await _networkInfo.isConnected) {
+      try {
+        final user = await _userRemoteDatasource.getMyProfile();
+        if (user != null) {
+          final userEntity = user.toEntity();
+          return Right(userEntity);
+        }
+        return Left(ApiFailure(message: "Couldnot get current user"));
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Couldnt get user",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
       }
-      return Left(ApiFailure(message: "Couldnot get current user"));
-    } on DioException catch (e) {
-      return Left(
-        ApiFailure(
-          message: e.response?.data['message'] ?? "Couldnt get user",
-          statusCode: e.response?.statusCode,
-        ),
-      );
-    } catch (e) {
-      return Left(ApiFailure(message: e.toString()));
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
     }
   }
 
   @override
-  Future<Either<Failure, UserEntity>> getUsersProfile(String userId) {
-    // TODO: implement getUsersProfile
-    throw UnimplementedError();
+  Future<Either<Failure, UserEntity>> getUsersProfile(String userId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final user = await _userRemoteDatasource.getUsersProfile(userId);
+        if (user != null) {
+          final userEntity = user.toEntity();
+          return Right(userEntity);
+        }
+        return Left(ApiFailure(message: "Couldnot get user"));
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Couldnt get user",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
+    }
   }
 }
