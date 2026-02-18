@@ -4,8 +4,8 @@ import 'package:artsphere/features/auth/presentation/pages/edit_profile_page.dar
 import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
-import 'package:artsphere/features/post/presentation/states/post_state.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
+import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,8 +23,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     Future.microtask(() async {
       await ref.read(userViewModelProvider.notifier).getProfile();
-      // TODO: when your getMyPosts is ready:
-      // await ref.read(postViewModelProvider.notifier).getMyPosts();
+      await ref.read(postViewModelProvider.notifier).loadMyPosts();
     });
   }
 
@@ -128,7 +127,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
                   const SliverToBoxAdapter(child: Divider(height: 1)),
 
-                  _PostsGrid(),
+                  ProfilePostGrid(
+                    posts: ref.watch(postViewModelProvider).myPosts,
+                    loading: ref.watch(postViewModelProvider).myPostsLoading,
+                    onTapPost: (post) {
+                      // TODO: open post details modal
+                    },
+                  ),
+
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
                 ],
               ),
@@ -368,91 +374,6 @@ class _TabIcon extends StatelessWidget {
           color: active ? Colors.black : Colors.transparent,
         ),
       ],
-    );
-  }
-}
-
-class _PostsGrid extends ConsumerWidget {
-  const _PostsGrid();
-
-  String _resolvePostMediaUrl(String media) {
-    // If backend already returns full URL
-    if (media.startsWith("http://") || media.startsWith("https://"))
-      return media;
-
-    // Adjust this to match your backend uploads path
-    // Example: ApiEndpoints.postImages = "http://localhost:5000/uploads/post-images"
-    // If you don’t have ApiEndpoints.postImages, create it.
-    if (media.startsWith("/uploads/")) return "${ApiEndpoints.baseUrl}$media";
-
-    // Default: assume normal posts are in /uploads/post-images
-    return "${ApiEndpoints.baseUrl}/uploads/post-images/$media";
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final postState = ref.watch(postViewModelProvider);
-
-    if (postState.actionLoading) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    final posts = postState.myPosts;
-
-    if (posts.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: Text("No posts yet")),
-        ),
-      );
-    }
-
-    return SliverPadding(
-      padding: const EdgeInsets.all(2),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 2,
-          crossAxisSpacing: 2,
-          childAspectRatio: 1,
-        ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final post = posts[index];
-          final media = post.media;
-
-          if (media == null || media.trim().isEmpty) {
-            return Container(
-              color: Colors.grey.shade200,
-              child: const Center(child: Icon(Icons.image_not_supported)),
-            );
-          }
-
-          final url = _resolvePostMediaUrl(media);
-
-          return InkWell(
-            onTap: () {
-              // TODO: open post details modal
-            },
-            child: Container(
-              color: Colors.grey.shade200,
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(child: Icon(Icons.broken_image)),
-                ),
-              ),
-            ),
-          );
-        }, childCount: posts.length),
-      ),
     );
   }
 }
