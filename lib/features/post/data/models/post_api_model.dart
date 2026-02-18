@@ -22,6 +22,8 @@ class PostApiModel {
   final List<String>? likedBy;
   final int? commentCount;
   final List<String>? commentedBy;
+  final bool? isChallengeSubmission;
+  final DateTime? createdAt;
 
   const PostApiModel({
     this.postId,
@@ -35,6 +37,8 @@ class PostApiModel {
     this.likedBy,
     this.commentCount,
     this.commentedBy,
+    this.isChallengeSubmission,
+    this.createdAt,
   });
 
   factory PostApiModel.fromJson(Map<String, dynamic> json) =>
@@ -55,6 +59,8 @@ class PostApiModel {
       likedBy: likedBy,
       commentCount: commentCount,
       commentedBy: commentedBy,
+      isChallengeSubmission: isChallengeSubmission,
+      createdAt: createdAt,
     );
   }
 
@@ -77,6 +83,8 @@ class PostApiModel {
       likedBy: post.likedBy,
       commentCount: post.commentCount,
       commentedBy: post.commentedBy,
+      isChallengeSubmission: post.isChallengeSubmission,
+      createdAt: post.createdAt,
     );
   }
 

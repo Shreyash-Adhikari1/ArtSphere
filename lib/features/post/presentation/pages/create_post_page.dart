@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:artsphere/features/post/presentation/states/post_state.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +26,7 @@ class _NewPostDetailsScreenState extends ConsumerState<CreatePostPage> {
   Future<void> _submit() async {
     final vm = ref.read(postViewModelProvider.notifier);
 
-    await vm.createPost(
+    final created = await vm.createPost(
       mediaPath: widget.mediaPath,
       mediaType: "image",
       caption: _captionCtrl.text.trim().isEmpty
@@ -35,28 +34,29 @@ class _NewPostDetailsScreenState extends ConsumerState<CreatePostPage> {
           : _captionCtrl.text.trim(),
       tags: _tags.isEmpty ? null : _tags,
     );
+
+    if (!mounted) return;
+
+    if (created != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Post created ✅")));
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      final err = ref.read(postViewModelProvider).errorMessage;
+      if (err != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(err)));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(postViewModelProvider);
 
-    ref.listen(postViewModelProvider, (prev, next) {
-      if (next.status == PostStatus.created) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Post created ✅")));
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-
-      if (next.status == PostStatus.error && next.errorMessage != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-      }
-    });
-
-    final loading = state.status == PostStatus.loading;
+    final loading = state.actionLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,

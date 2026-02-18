@@ -21,6 +21,10 @@ PostApiModel _$PostApiModelFromJson(Map<String, dynamic> json) => PostApiModel(
       commentedBy: (json['commentedBy'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      isChallengeSubmission: json['isChallengeSubmission'] as bool?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$PostApiModelToJson(PostApiModel instance) =>
@@ -36,4 +40,6 @@ Map<String, dynamic> _$PostApiModelToJson(PostApiModel instance) =>
       'likedBy': instance.likedBy,
       'commentCount': instance.commentCount,
       'commentedBy': instance.commentedBy,
+      'isChallengeSubmission': instance.isChallengeSubmission,
+      'createdAt': instance.createdAt?.toIso8601String(),
     };

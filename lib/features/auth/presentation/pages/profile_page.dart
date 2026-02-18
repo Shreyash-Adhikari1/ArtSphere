@@ -393,7 +393,7 @@ class _PostsGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postState = ref.watch(postViewModelProvider);
 
-    if (postState.status == PostStatus.loading) {
+    if (postState.actionLoading) {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -402,7 +402,7 @@ class _PostsGrid extends ConsumerWidget {
       );
     }
 
-    final posts = postState.posts;
+    final posts = postState.myPosts;
 
     if (posts.isEmpty) {
       return const SliverToBoxAdapter(

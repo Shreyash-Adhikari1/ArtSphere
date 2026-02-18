@@ -23,6 +23,11 @@ class ApiEndpoints {
   static String get mediaServerUrl => serverUrl;
 
   static String get profileImages => '$mediaServerUrl/uploads/profile-image';
+  static String get postImages => '$mediaServerUrl/uploads/post-images';
+  static String get challengeImages =>
+      '$mediaServerUrl/uploads/challenge-images';
+  static String get challengeSubmissions =>
+      '$mediaServerUrl/uploads/challenge-submissions';
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -43,9 +48,9 @@ class ApiEndpoints {
   static const String getMyPosts = '/post/posts/my-posts';
   static const String getFollowingFeed = '/post/posts/following';
   static String getPostsByUser(String id) => '/post/user/$id';
-  static String deletePost(String id) => 'post/delete/$id';
-  static String likePost(String id) => 'post/like/$id';
-  static String unlikePost(String id) => 'post/unlike/$id';
+  static String deletePost(String id) => '/post/delete/$id';
+  static String likePost(String id) => '/post/like/$id';
+  static String unlikePost(String id) => '/post/unlike/$id';
 
   // ============== Comment Endpoints ==============
   static const String comments = '/comment';
