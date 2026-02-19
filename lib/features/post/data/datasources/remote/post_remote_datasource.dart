@@ -142,18 +142,22 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
   @override
   Future<List<PostApiModel>> getPostsByUser(String userId) async {
     final token = _tokenService.getToken();
+
     final response = await _apiClient.get(
       ApiEndpoints.getPostsByUser(userId),
       options: Options(headers: {'Authorization': "Bearer $token"}),
     );
+
     if (response.data['success'] == true) {
-      final List<dynamic> data =
-          response.data["posts"] as List<Map<String, dynamic>>;
+      final List data = (response.data['posts'] as List?) ?? [];
+
       final posts = data
           .map((json) => PostApiModel.fromJson(Map<String, dynamic>.from(json)))
           .toList();
+
       return posts;
     }
+
     throw Exception(
       response.data['message'] ?? "Failed to fetch posts by user",
     );
