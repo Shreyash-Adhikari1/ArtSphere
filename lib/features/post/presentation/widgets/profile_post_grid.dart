@@ -1,36 +1,28 @@
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProfilePostGrid extends ConsumerWidget {
+class ProfilePostGrid extends StatelessWidget {
   const ProfilePostGrid({
     super.key,
     required this.posts,
-    this.loading = false,
-    this.emptyText = "No posts yet",
+    required this.loading,
     this.onTapPost,
   });
 
   final List<PostEntity> posts;
   final bool loading;
-  final String emptyText;
   final void Function(PostEntity post)? onTapPost;
 
   String _resolvePostMediaUrl(PostEntity post) {
-    final media = post.media;
-    if (media == null || media.trim().isEmpty) return "";
+    final media = post.media ?? '';
 
-    // Full URL
     if (media.startsWith("http://") || media.startsWith("https://"))
       return media;
-
-    // Already a backend path
     if (media.startsWith("/uploads/")) return "${ApiEndpoints.baseUrl}$media";
 
-    final fileName = media.split("/").last;
+    final fileName = media.split('/').last;
 
-    // Choose folder based on flag (important for challenge submissions)
     final base = (post.isChallengeSubmission == true)
         ? ApiEndpoints.challengeSubmissions
         : ApiEndpoints.postImages;
@@ -39,7 +31,7 @@ class ProfilePostGrid extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     if (loading) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -50,10 +42,10 @@ class ProfilePostGrid extends ConsumerWidget {
     }
 
     if (posts.isEmpty) {
-      return SliverToBoxAdapter(
+      return const SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Center(child: Text(emptyText)),
+          padding: EdgeInsets.all(32),
+          child: Center(child: Text("No posts yet")),
         ),
       );
     }
@@ -69,14 +61,16 @@ class ProfilePostGrid extends ConsumerWidget {
         ),
         delegate: SliverChildBuilderDelegate((context, index) {
           final post = posts[index];
-          final url = _resolvePostMediaUrl(post);
+          final media = post.media;
 
-          if (url.isEmpty) {
+          if (media == null || media.trim().isEmpty) {
             return Container(
               color: Colors.grey.shade200,
               child: const Center(child: Icon(Icons.image_not_supported)),
             );
           }
+
+          final url = _resolvePostMediaUrl(post);
 
           return InkWell(
             onTap: () => onTapPost?.call(post),

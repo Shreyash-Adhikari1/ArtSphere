@@ -1,4 +1,6 @@
+import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
+import 'package:artsphere/features/auth/presentation/pages/user_profile_page.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,6 +83,7 @@ class PostcardWidget extends ConsumerWidget {
     void goToProfile() {
       final userId = currentPost.author?.userId;
       if (userId == null) return;
+      AppRoutes.push(context, UserProfilePage(userId: userId));
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Navigate to user profile: $userId")),
