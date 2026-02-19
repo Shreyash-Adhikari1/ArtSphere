@@ -1,7 +1,7 @@
 import 'package:artsphere/core/constants/hive_table_constant.dart';
 import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
 // Hivfe Srevice Provider
