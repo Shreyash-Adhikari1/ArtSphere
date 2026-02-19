@@ -1,4 +1,5 @@
-import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
+import 'package:artsphere/features/comment/data/models/comment-user/comment_user_api_model.dart';
+import 'package:artsphere/features/comment/data/models/helper/user_converter.dart';
 import 'package:artsphere/features/comment/domain/entities/comment_entity.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -9,10 +10,15 @@ class CommentApiModel {
   @JsonKey(name: "_id")
   final String? commentId;
   final String? postId;
-  final UserApiModel? userId;
+  @JsonKey(
+    fromJson: CommentUserConverter.fromJson,
+    toJson: CommentUserConverter.toJson,
+  )
+  final CommentUserApiModel? userId;
   final String commentText;
   final int? likeCount;
   final List<String>? likedBy;
+  final DateTime? createdAt;
 
   const CommentApiModel({
     this.commentId,
@@ -21,6 +27,7 @@ class CommentApiModel {
     required this.commentText,
     this.likeCount,
     this.likedBy,
+    this.createdAt,
   });
 
   // FromJson
@@ -39,6 +46,7 @@ class CommentApiModel {
       commentText: commentText,
       likeCount: likeCount ?? 0,
       likedBy: likedBy ?? [],
+      createdAt: createdAt,
     );
   }
 
@@ -48,11 +56,16 @@ class CommentApiModel {
       commentId: comment.commentId,
       userId: comment.userId == null
           ? null
-          : UserApiModel.fromEntity(comment.userId!),
+          : CommentUserApiModel(
+              id: comment.userId!.userId,
+              username: comment.userId!.username,
+              avatar: comment.userId!.avatar,
+            ),
       postId: comment.postId,
       commentText: comment.commentText,
       likeCount: comment.likeCount,
       likedBy: comment.likedBy,
+      createdAt: comment.createdAt,
     );
   }
 
