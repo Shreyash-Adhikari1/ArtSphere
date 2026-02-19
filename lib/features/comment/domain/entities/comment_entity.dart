@@ -8,6 +8,7 @@ class CommentEntity extends Equatable {
   final String commentText;
   final int? likeCount;
   final List<String>? likedBy;
+  final DateTime? createdAt;
 
   const CommentEntity({
     this.commentId,
@@ -16,6 +17,7 @@ class CommentEntity extends Equatable {
     required this.commentText,
     this.likeCount,
     this.likedBy,
+    this.createdAt,
   });
   @override
   List<Object?> get props => [
@@ -25,5 +27,6 @@ class CommentEntity extends Equatable {
     commentText,
     likeCount,
     likedBy,
+    createdAt,
   ];
 }
