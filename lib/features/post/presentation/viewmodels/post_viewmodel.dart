@@ -9,6 +9,7 @@ import 'package:artsphere/features/post/domain/usecases/get_user_posts_usecase.d
 import 'package:artsphere/features/post/domain/usecases/like_post_usecase.dart';
 import 'package:artsphere/features/post/domain/usecases/unlike_post_usecase.dart';
 import 'package:artsphere/features/post/presentation/states/post_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final postViewModelProvider = NotifierProvider<PostViewModel, PostState>(
@@ -45,9 +46,7 @@ class PostViewModel extends Notifier<PostState> {
     return const PostState();
   }
 
-  // -------------------------
   // Helpers
-  // -------------------------
 
   void clearError() {
     state = state.copyWith(clearError: true);
@@ -75,9 +74,7 @@ class PostViewModel extends Notifier<PostState> {
     return list.where((p) => p.postId != postId).toList();
   }
 
-  // -------------------------
   // Feed loaders
-  // -------------------------
 
   Future<void> loadDiscoverFeed() async {
     state = state.copyWith(discoverLoading: true, clearError: true);
@@ -135,27 +132,32 @@ class PostViewModel extends Notifier<PostState> {
 
   Future<void> loadUserPosts(String userId) async {
     state = state.copyWith(userPostsLoading: true, clearError: true);
+    try {
+      final result = await _getUserPosts(
+        GetUserPostsUsecaseParams(userId: userId),
+      );
 
-    final result = await _getUserPosts(
-      GetUserPostsUsecaseParams(userId: userId),
-    );
+      result.fold(
+        (failure) {
+          state = state.copyWith(errorMessage: failure.message);
+        },
+        (posts) {
+          debugPrint("userPosts length from usecase: ${posts.length}");
+          debugPrint(
+            "✅ userPosts first id: ${posts.isNotEmpty ? posts.first.postId : 'empty'}",
+          );
 
-    result.fold(
-      (failure) {
-        state = state.copyWith(
-          userPostsLoading: false,
-          errorMessage: failure.message,
-        );
-      },
-      (posts) {
-        state = state.copyWith(userPostsLoading: false, userPosts: posts);
-      },
-    );
+          state = state.copyWith(userPosts: posts);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+    } finally {
+      state = state.copyWith(userPostsLoading: false);
+    }
   }
 
-  // -------------------------
   // Create post
-  // -------------------------
 
   Future<PostEntity?> createPost({
     required String mediaPath,
@@ -185,7 +187,6 @@ class PostViewModel extends Notifier<PostState> {
         return null;
       },
       (createdPost) {
-        // Instant UI update (add to top)
         final updatedDiscover = [createdPost, ...state.discoverPosts];
         final updatedMyPosts = [createdPost, ...state.myPosts];
 
@@ -200,9 +201,7 @@ class PostViewModel extends Notifier<PostState> {
     );
   }
 
-  // -------------------------
   // Edit post
-  // -------------------------
 
   Future<bool> editPost({
     required String postId,
@@ -230,9 +229,7 @@ class PostViewModel extends Notifier<PostState> {
         return false;
       },
       (_) async {
-        // easiest: refresh discover/my posts if you want true sync
         state = state.copyWith(actionLoading: false);
-        // optional: await loadDiscoverFeed(); await loadMyPosts();
         return true;
       },
     );
