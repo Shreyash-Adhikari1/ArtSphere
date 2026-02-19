@@ -16,11 +16,11 @@ EditProfileApiModel _$EditProfileApiModelFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$EditProfileApiModelToJson(
-        EditProfileApiModel instance) =>
-    <String, dynamic>{
-      'fullName': instance.fullName,
-      'username': instance.username,
-      'phoneNumber': instance.phoneNumber,
-      'address': instance.address,
-      'avatar': instance.avatar,
-    };
+  EditProfileApiModel instance,
+) => <String, dynamic>{
+  'fullName': instance.fullName,
+  'username': instance.username,
+  'phoneNumber': instance.phoneNumber,
+  'address': instance.address,
+  'avatar': instance.avatar,
+};

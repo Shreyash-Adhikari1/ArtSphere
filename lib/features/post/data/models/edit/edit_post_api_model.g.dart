@@ -13,17 +13,9 @@ EditPostApiModel _$EditPostApiModelFromJson(Map<String, dynamic> json) =>
       visibility: json['visibility'] as String?,
     );
 
-Map<String, dynamic> _$EditPostApiModelToJson(EditPostApiModel instance) {
-  final val = <String, dynamic>{};
-
-  void writeNotNull(String key, dynamic value) {
-    if (value != null) {
-      val[key] = value;
-    }
-  }
-
-  writeNotNull('caption', instance.caption);
-  writeNotNull('tags', instance.tags);
-  writeNotNull('visibility', instance.visibility);
-  return val;
-}
+Map<String, dynamic> _$EditPostApiModelToJson(EditPostApiModel instance) =>
+    <String, dynamic>{
+      'caption': ?instance.caption,
+      'tags': ?instance.tags,
+      'visibility': ?instance.visibility,
+    };

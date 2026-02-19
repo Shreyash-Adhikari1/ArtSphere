@@ -7,22 +7,21 @@ part of 'user_api_model.dart';
 // **************************************************************************
 
 UserApiModel _$UserApiModelFromJson(Map<String, dynamic> json) => UserApiModel(
-      id: json['_id'] as String?,
-      fullName: json['fullName'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      password: json['password'] as String?,
-      confirmPassword: json['confirmPassword'] as String?,
-      phoneNumber: json['phoneNumber'] as String?,
-      address: json['address'] as String?,
-      avatar: json['avatar'] as String?,
-      bio: json['bio'] as String?,
-      followerCount: (json['followerCount'] as num?)?.toInt(),
-      followingCount: (json['followingCount'] as num?)?.toInt(),
-      postCount: (json['postCount'] as num?)?.toInt(),
-      posts:
-          (json['posts'] as List<dynamic>?)?.map((e) => e as String).toList(),
-    );
+  id: json['_id'] as String?,
+  fullName: json['fullName'] as String,
+  username: json['username'] as String,
+  email: json['email'] as String,
+  password: json['password'] as String?,
+  confirmPassword: json['confirmPassword'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
+  address: json['address'] as String?,
+  avatar: json['avatar'] as String?,
+  bio: json['bio'] as String?,
+  followerCount: (json['followerCount'] as num?)?.toInt(),
+  followingCount: (json['followingCount'] as num?)?.toInt(),
+  postCount: (json['postCount'] as num?)?.toInt(),
+  posts: (json['posts'] as List<dynamic>?)?.map((e) => e as String).toList(),
+);
 
 Map<String, dynamic> _$UserApiModelToJson(UserApiModel instance) =>
     <String, dynamic>{

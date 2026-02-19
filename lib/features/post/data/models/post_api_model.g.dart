@@ -7,25 +7,26 @@ part of 'post_api_model.dart';
 // **************************************************************************
 
 PostApiModel _$PostApiModelFromJson(Map<String, dynamic> json) => PostApiModel(
-      postId: json['_id'] as String?,
-      author: AuthorConverter.fromJson(json['author']),
-      media: json['media'] as String?,
-      mediaType: json['mediaType'] as String?,
-      caption: json['caption'] as String?,
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
-      visibility: json['visibility'] as String?,
-      likeCount: (json['likeCount'] as num?)?.toInt(),
-      likedBy:
-          (json['likedBy'] as List<dynamic>?)?.map((e) => e as String).toList(),
-      commentCount: (json['commentCount'] as num?)?.toInt(),
-      commentedBy: (json['commentedBy'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      isChallengeSubmission: json['isChallengeSubmission'] as bool?,
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.parse(json['createdAt'] as String),
-    );
+  postId: json['_id'] as String?,
+  author: AuthorConverter.fromJson(json['author']),
+  media: json['media'] as String?,
+  mediaType: json['mediaType'] as String?,
+  caption: json['caption'] as String?,
+  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  visibility: json['visibility'] as String?,
+  likeCount: (json['likeCount'] as num?)?.toInt(),
+  likedBy: (json['likedBy'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  commentCount: (json['commentCount'] as num?)?.toInt(),
+  commentedBy: (json['commentedBy'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  isChallengeSubmission: json['isChallengeSubmission'] as bool?,
+  createdAt: json['createdAt'] == null
+      ? null
+      : DateTime.parse(json['createdAt'] as String),
+);
 
 Map<String, dynamic> _$PostApiModelToJson(PostApiModel instance) =>
     <String, dynamic>{
