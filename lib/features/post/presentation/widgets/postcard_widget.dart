@@ -2,6 +2,7 @@ import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/auth/presentation/pages/user_profile_page.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
+import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -210,8 +211,10 @@ class PostcardWidget extends ConsumerWidget {
 
               IconButton(
                 onPressed: () {
-                  // TODO: open comments modal for currentPost.postId
-                  // You'll wire this next.
+                  showPostDetailsModal(
+                    context,
+                    currentPost,
+                  ); // ✅ open the same modal
                 },
                 icon: const Icon(Icons.mode_comment_outlined, size: 24),
               ),

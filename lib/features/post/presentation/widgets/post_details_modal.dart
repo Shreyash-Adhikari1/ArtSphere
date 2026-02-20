@@ -1,3 +1,4 @@
+import 'package:artsphere/features/comment/presentation/viewmodels/comment_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,12 +16,28 @@ void showPostDetailsModal(BuildContext context, PostEntity post) {
   );
 }
 
-class _PostDetailsSheet extends ConsumerWidget {
+class _PostDetailsSheet extends ConsumerStatefulWidget {
   const _PostDetailsSheet({required this.post});
-
   final PostEntity post;
 
+  @override
+  ConsumerState<_PostDetailsSheet> createState() => _PostDetailsSheetState();
+}
+
+class _PostDetailsSheetState extends ConsumerState<_PostDetailsSheet> {
   static const _pink = Color(0xFFC974A6);
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final postId = widget.post.postId;
+      if (postId == null || postId.isEmpty) return;
+
+      ref.read(commentViewModelProvider.notifier).loadComments(postId);
+    });
+  }
 
   String? _resolvePostMediaUrl(PostEntity post) {
     final media = post.media;
@@ -31,7 +48,6 @@ class _PostDetailsSheet extends ConsumerWidget {
     if (media.startsWith('/uploads/')) return '${ApiEndpoints.baseUrl}$media';
 
     final fileName = media.split('/').last;
-
     final base = (post.isChallengeSubmission == true)
         ? ApiEndpoints.challengeSubmissions
         : ApiEndpoints.postImages;
@@ -43,24 +59,29 @@ class _PostDetailsSheet extends ConsumerWidget {
     if (avatar == null || avatar.trim().isEmpty) return null;
     if (avatar.startsWith('http://') || avatar.startsWith('https://'))
       return avatar;
-
     final fileName = avatar.split('/').last;
     return '${ApiEndpoints.profileImages}/$fileName';
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final postState = ref.watch(postViewModelProvider);
-    final vm = ref.read(postViewModelProvider.notifier);
+    final postVm = ref.read(postViewModelProvider.notifier);
 
-    // ✅ always use latest post copy (so likeCount/likedBy updates inside modal too)
-    PostEntity currentPost = post;
-    final id = post.postId;
+    final commentState = ref.watch(commentViewModelProvider);
+    final commentVm = ref.read(commentViewModelProvider.notifier);
+
+    PostEntity currentPost = widget.post;
+    final id = widget.post.postId;
     if (id != null) {
       final match = postState.discoverPosts.where((p) => p.postId == id);
       if (match.isNotEmpty) currentPost = match.first;
       final match2 = postState.myPosts.where((p) => p.postId == id);
       if (match2.isNotEmpty) currentPost = match2.first;
+      final match3 = postState.userPosts.where((p) => p.postId == id);
+      if (match3.isNotEmpty) currentPost = match3.first;
+      final match4 = postState.followingPosts.where((p) => p.postId == id);
+      if (match4.isNotEmpty) currentPost = match4.first;
     }
 
     final userState = ref.watch(userViewModelProvider);
@@ -80,11 +101,25 @@ class _PostDetailsSheet extends ConsumerWidget {
       if (likeBusy) return;
       if (myUserId == null) return;
 
-      await vm.toggleLike(
+      await postVm.toggleLike(
         post: currentPost,
         currentlyLiked: isLiked,
         myUserId: myUserId,
       );
+    }
+
+    Future<void> sendComment(String text) async {
+      if (postId.isEmpty) return;
+
+      final created = await commentVm.createComment(
+        postId: postId,
+        commentText: text,
+      );
+
+      if (created != null) {
+        postVm.bumpCommentCount(postId, delta: 1);
+        await commentVm.loadComments(postId);
+      }
     }
 
     return DraggableScrollableSheet(
@@ -136,13 +171,11 @@ class _PostDetailsSheet extends ConsumerWidget {
                   ),
                 ),
 
-                // Body scroll
                 Expanded(
                   child: ListView(
                     controller: scrollController,
                     padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
                     children: [
-                      // Post media (original, not “IG cloned”)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: AspectRatio(
@@ -169,7 +202,6 @@ class _PostDetailsSheet extends ConsumerWidget {
 
                       const SizedBox(height: 12),
 
-                      // Actions row (like + comment count on left, save on right)
                       Row(
                         children: [
                           IconButton(
@@ -196,15 +228,12 @@ class _PostDetailsSheet extends ConsumerWidget {
                           const Spacer(),
 
                           IconButton(
-                            onPressed: () {
-                              // TODO: bookmark later
-                            },
+                            onPressed: () {},
                             icon: const Icon(Icons.bookmark_border, size: 26),
                           ),
                         ],
                       ),
 
-                      // Caption
                       if ((currentPost.caption ?? '').trim().isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
@@ -224,22 +253,21 @@ class _PostDetailsSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
 
-                      // ✅ Comments list placeholder (UI ready)
-                      // You will wire this to a CommentViewModel later.
-                      _CommentsPlaceholder(),
+                      _PostCommentsSection(
+                        postId: postId,
+                        pink: _pink,
+                        onDeleted: () =>
+                            postVm.bumpCommentCount(postId, delta: -1),
+                      ),
 
-                      const SizedBox(height: 80), // room for input bar
+                      const SizedBox(height: 80),
+
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
 
-                // Comment input bar (UI only; hook it later)
-                _CommentInputBar(
-                  onSend: (text) {
-                    // TODO: call commentViewModel.addComment(postId, text)
-                    // also update post.commentCount in PostViewModel if you want optimistic delta
-                  },
-                ),
+                _CommentInputBar(onSend: sendComment),
               ],
             ),
           ),
@@ -249,49 +277,196 @@ class _PostDetailsSheet extends ConsumerWidget {
   }
 }
 
-class _CommentsPlaceholder extends StatelessWidget {
+class _PostCommentsSection extends ConsumerStatefulWidget {
+  const _PostCommentsSection({
+    required this.postId,
+    required this.pink,
+    required this.onDeleted,
+  });
+
+  final String postId;
+  final Color pink;
+  final VoidCallback onDeleted;
+
+  @override
+  ConsumerState<_PostCommentsSection> createState() =>
+      _PostCommentsSectionState();
+}
+
+class _PostCommentsSectionState extends ConsumerState<_PostCommentsSection> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(commentViewModelProvider.notifier).loadComments(widget.postId);
+    });
+  }
+
+  String? _resolveAvatarUrl(String? avatar) {
+    if (avatar == null || avatar.trim().isEmpty) return null;
+    if (avatar.startsWith('http://') || avatar.startsWith('https://'))
+      return avatar;
+    final fileName = avatar.split('/').last;
+    return '${ApiEndpoints.profileImages}/$fileName';
+  }
+
+  Future<void> _confirmDelete(BuildContext context, VoidCallback onYes) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete comment?"),
+        content: const Text("This can't be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) onYes();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Replace this widget with your real comments list once you wire backend.
+    final commentState = ref.watch(commentViewModelProvider);
+    final commentVm = ref.read(commentViewModelProvider.notifier);
+    final myUserId = ref.watch(userViewModelProvider).userEntity?.userId;
+
+    if (commentState.commentsLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final comments = commentState.comments;
+
+    if (comments.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: Text(
+            "No comments yet",
+            style: TextStyle(color: Colors.black54),
+          ),
+        ),
+      );
+    }
+
     return Column(
-      children: List.generate(6, (i) {
+      children: comments.map((c) {
+        final commentId = c.commentId;
+        final isMine = myUserId != null && c.userId?.userId == myUserId;
+
+        final liked =
+            myUserId != null && (c.likedBy ?? const []).contains(myUserId);
+        final busy =
+            commentId != null && (commentState.likeBusy[commentId] == true);
+
+        final avatarUrl = _resolveAvatarUrl(c.userId?.avatar);
+        final username = c.userId?.username ?? "user";
+
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _AvatarCircle(url: null, size: 30),
+              _AvatarCircle(url: avatarUrl, size: 28),
               const SizedBox(width: 10),
+
+              // Compact comment body (no big box)
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF6ED),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "@user",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // username + text (compact)
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                          height: 1.25,
                         ),
+                        children: [
+                          TextSpan(
+                            text: "@$username ",
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          TextSpan(text: c.commentText),
+                        ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        "This is a placeholder comment. Wire backend later 👀",
-                        style: TextStyle(fontSize: 12, color: Colors.black87),
-                      ),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // Actions row (like count + optional delete)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: busy || commentId == null || myUserId == null
+                              ? null
+                              : () => commentVm.toggleLike(
+                                  comment: c,
+                                  currentlyLiked: liked,
+                                  myUserId: myUserId,
+                                ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                liked ? Icons.favorite : Icons.favorite_border,
+                                size: 16,
+                                color: liked ? widget.pink : Colors.black54,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "${c.likeCount ?? 0}",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (isMine && commentId != null) ...[
+                          const SizedBox(width: 16),
+                          InkWell(
+                            onTap: () async {
+                              await _confirmDelete(context, () async {
+                                final ok = await commentVm.deleteComment(
+                                  commentId,
+                                );
+                                if (ok) widget.onDeleted();
+                              });
+                            },
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         );
-      }),
+      }).toList(),
     );
   }
 }

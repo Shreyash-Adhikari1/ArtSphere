@@ -349,4 +349,33 @@ class PostViewModel extends Notifier<PostState> {
 
     _setLikeBusy(postId, false);
   }
+
+  void bumpCommentCount(String postId, {int delta = 1}) {
+    PostEntity bump(PostEntity p) {
+      if (p.postId != postId) return p;
+      final current = p.commentCount ?? 0;
+      return PostEntity(
+        postId: p.postId,
+        author: p.author,
+        media: p.media,
+        mediaType: p.mediaType,
+        caption: p.caption,
+        tags: p.tags,
+        visibility: p.visibility,
+        likeCount: p.likeCount,
+        likedBy: p.likedBy,
+        commentCount: (current + delta).clamp(0, 999999),
+        commentedBy: p.commentedBy,
+        isChallengeSubmission: p.isChallengeSubmission,
+        createdAt: p.createdAt,
+      );
+    }
+
+    state = state.copyWith(
+      discoverPosts: state.discoverPosts.map(bump).toList(),
+      followingPosts: state.followingPosts.map(bump).toList(),
+      myPosts: state.myPosts.map(bump).toList(),
+      userPosts: state.userPosts.map(bump).toList(),
+    );
+  }
 }
