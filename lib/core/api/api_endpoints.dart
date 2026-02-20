@@ -54,11 +54,11 @@ class ApiEndpoints {
 
   // ============== Comment Endpoints ==============
   static const String comments = '/comment';
-  static String createComment(String id) => 'comment/create/$id';
+  static String createComment(String id) => '/comment/create/$id';
   static String getCommentsForPost(String id) => '/comment/post/$id';
-  static String deleteComment(String id) => 'comment/delete/$id';
-  static String likeComment(String id) => 'comment/like/$id';
-  static String unlikeComment(String id) => 'comment/unlike/$id';
+  static String deleteComment(String id) => '/comment/delete/$id';
+  static String likeComment(String id) => '/comment/like/$id';
+  static String unlikeComment(String id) => '/comment/unlike/$id';
 
   // ============ Batch Endpoints ============
   static const String batches = '/batches';
