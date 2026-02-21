@@ -43,6 +43,7 @@ class FollowApiModel {
   // to entity
   FollowEntity toEntity() {
     return FollowEntity(
+      followId: followId,
       follower: follower?.toEntity(),
       following: following?.toEntity(),
       isFollowActive: isFollowActive,
