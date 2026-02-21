@@ -60,6 +60,15 @@ class ApiEndpoints {
   static String likeComment(String id) => '/comment/like/$id';
   static String unlikeComment(String id) => '/comment/unlike/$id';
 
+  // ============== Follow Endpoints ================
+  static const String follow = '/follow';
+  static String followUser(String id) => '/follow/follow/$id';
+  static String unfollowUser(String id) => '/follow/unfollow/$id';
+  static const String getMyFollowers = '/follow/followers';
+  static const String getMyFollowing = '/follow/following';
+  static String getUsersFollowers(String id) => '/follow/$id/followers';
+  static String getUsersFollowing(String id) => '/follow/$id/following';
+
   // ============ Batch Endpoints ============
   static const String batches = '/batches';
   static String batchById(String id) => '/batches/$id';
