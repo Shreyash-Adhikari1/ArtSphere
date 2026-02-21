@@ -68,6 +68,7 @@ class ApiEndpoints {
   static const String getMyFollowing = '/follow/following';
   static String getUsersFollowers(String id) => '/follow/$id/followers';
   static String getUsersFollowing(String id) => '/follow/$id/following';
+  static String getIsFollowingStatus(String id) => "/follow/is-following/$id";
 
   // ============ Batch Endpoints ============
   static const String batches = '/batches';
