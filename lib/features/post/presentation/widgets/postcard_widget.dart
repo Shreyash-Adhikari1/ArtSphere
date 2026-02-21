@@ -67,8 +67,26 @@ class PostcardWidget extends ConsumerWidget {
     PostEntity currentPost = post;
     final id = post.postId;
     if (id != null) {
-      final match = state.discoverPosts.where((p) => p.postId == id);
-      if (match.isNotEmpty) currentPost = match.first;
+      PostEntity? found;
+
+      found = state.discoverPosts.cast<PostEntity?>().firstWhere(
+        (p) => p?.postId == id,
+        orElse: () => null,
+      );
+      found ??= state.followingPosts.cast<PostEntity?>().firstWhere(
+        (p) => p?.postId == id,
+        orElse: () => null,
+      );
+      found ??= state.myPosts.cast<PostEntity?>().firstWhere(
+        (p) => p?.postId == id,
+        orElse: () => null,
+      );
+      found ??= state.userPosts.cast<PostEntity?>().firstWhere(
+        (p) => p?.postId == id,
+        orElse: () => null,
+      );
+
+      if (found != null) currentPost = found;
     }
 
     final postId = currentPost.postId ?? "";
