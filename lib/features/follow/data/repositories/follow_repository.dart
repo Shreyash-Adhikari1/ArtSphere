@@ -191,4 +191,30 @@ class FollowRepository implements IFollowRepository {
       );
     }
   }
+
+  @override
+  Future<Either<Failure, bool>> getIsFollowingStatus(
+    String targetUserId,
+  ) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final res = await _followRemoteDatasource.getIsFollowingStatus(
+          targetUserId,
+        );
+        return Right(res);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data["message"] ?? "Failed to fetch follow status",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet required"));
+    }
+  }
 }

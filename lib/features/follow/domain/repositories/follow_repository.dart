@@ -12,4 +12,6 @@ abstract interface class IFollowRepository {
   Future<Either<Failure, List<FollowEntity>>> getMyFollowing();
   Future<Either<Failure, List<FollowEntity>>> getUsersFollowers(String userId);
   Future<Either<Failure, List<FollowEntity>>> getUsersFollowing(String userId);
+
+  Future<Either<Failure, bool>> getIsFollowingStatus(String targetUserId);
 }

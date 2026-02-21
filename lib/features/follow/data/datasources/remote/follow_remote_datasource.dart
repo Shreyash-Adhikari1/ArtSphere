@@ -129,4 +129,21 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
       response.data["message"] ?? "Failed to get users following",
     );
   }
+
+  @override
+  Future<bool> getIsFollowingStatus(String targetUserId) async {
+    final token = _tokenService.getToken();
+
+    final response = await _apiClient.get(
+      ApiEndpoints.getIsFollowingStatus(targetUserId),
+      options: Options(headers: {"Authorization": "Bearer $token"}),
+    );
+
+    if (response.data["success"] == true) {
+      return response.data["isFollowing"] == true;
+    }
+    throw Exception(
+      response.data["message"] ?? "Failed to fetch follow status",
+    );
+  }
 }

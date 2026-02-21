@@ -10,4 +10,6 @@ abstract interface class IFollowRemoteDatasource {
   Future<List<FollowApiModel>> getMyFollowing();
   Future<List<FollowApiModel>> getUsersFollowers(String userId);
   Future<List<FollowApiModel>> getUsersFollowing(String userId);
+
+  Future<bool> getIsFollowingStatus(String targetUserId);
 }
