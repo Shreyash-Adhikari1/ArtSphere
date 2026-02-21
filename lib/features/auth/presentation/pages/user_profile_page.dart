@@ -1,6 +1,8 @@
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
+import 'package:artsphere/features/follow/presentation/viewmodels/follow_viewmodel.dart';
+import 'package:artsphere/features/follow/presentation/widgets/follow_list_modal.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
 import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
 import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
@@ -16,32 +18,25 @@ class UserProfilePage extends ConsumerStatefulWidget {
 }
 
 class _UserProfilePageState extends ConsumerState<UserProfilePage> {
+  Future<void> _loadAll(String userId) async {
+    await ref.read(userViewModelProvider.notifier).getUsersProfile(userId);
+    await ref.read(postViewModelProvider.notifier).loadUserPosts(userId);
+
+    // IMPORTANT: always refresh follow status for correctness
+    await ref.read(followViewModelProvider.notifier).refreshIsFollowing(userId);
+  }
+
   @override
   void initState() {
     super.initState();
-
-    Future.microtask(() async {
-      await ref
-          .read(userViewModelProvider.notifier)
-          .getUsersProfile(widget.userId);
-      await ref
-          .read(postViewModelProvider.notifier)
-          .loadUserPosts(widget.userId);
-    });
+    Future.microtask(() => _loadAll(widget.userId));
   }
 
   @override
   void didUpdateWidget(covariant UserProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userId != widget.userId) {
-      Future.microtask(() async {
-        await ref
-            .read(userViewModelProvider.notifier)
-            .getUsersProfile(widget.userId);
-        await ref
-            .read(postViewModelProvider.notifier)
-            .loadUserPosts(widget.userId);
-      });
+      Future.microtask(() => _loadAll(widget.userId));
     }
   }
 
@@ -49,9 +44,78 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
     final postState = ref.watch(postViewModelProvider);
-    debugPrint("🟣 userPosts length in UI: ${postState.userPosts.length}");
-    debugPrint("🟣 userPostsLoading: ${postState.userPostsLoading}");
     final user = userState.viewingUserEntity;
+
+    final followState = ref.watch(followViewModelProvider);
+    final followVm = ref.read(followViewModelProvider.notifier);
+
+    final myUserId = userState.userEntity?.userId;
+    final viewingUserId = widget.userId;
+    final isMe = myUserId != null && myUserId == viewingUserId;
+
+    // ✅ tri-state follow status
+    final bool? cached = followState.isFollowingCache[viewingUserId];
+    final bool statusUnknown = cached == null;
+    final bool currentlyFollowing = cached == true;
+
+    // ✅ busy if request running OR unknown status (so user can’t tap wrong state)
+    final bool busy =
+        (followState.followBusy[viewingUserId] == true) || statusUnknown;
+
+    Future<void> openFollowers() async {
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.followers,
+        userId: viewingUserId,
+      );
+
+      // resync button + counts after modal closes
+      await ref
+          .read(followViewModelProvider.notifier)
+          .refreshIsFollowing(viewingUserId);
+      await ref
+          .read(userViewModelProvider.notifier)
+          .getUsersProfile(viewingUserId);
+    }
+
+    Future<void> openFollowing() async {
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.following,
+        userId: viewingUserId,
+      );
+
+      await ref
+          .read(followViewModelProvider.notifier)
+          .refreshIsFollowing(viewingUserId);
+      await ref
+          .read(userViewModelProvider.notifier)
+          .getUsersProfile(viewingUserId);
+    }
+
+    Future<void> onFollowPressed() async {
+      if (isMe) return;
+
+      // ✅ re-read current status at click time (prevents stale value bugs)
+      final bool nowFollowing =
+          ref.read(followViewModelProvider).isFollowingCache[viewingUserId] ==
+          true;
+
+      await followVm.toggleFollow(
+        targetUserId: viewingUserId,
+        currentlyFollowing: nowFollowing,
+      );
+
+      // refresh counts (optional but makes header accurate)
+      await ref
+          .read(userViewModelProvider.notifier)
+          .getUsersProfile(viewingUserId);
+
+      // keep cache aligned with server (safe)
+      await ref
+          .read(followViewModelProvider.notifier)
+          .refreshIsFollowing(viewingUserId);
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -72,12 +136,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
           ? const Center(child: Text("User not found"))
           : RefreshIndicator(
               onRefresh: () async {
-                await ref
-                    .read(userViewModelProvider.notifier)
-                    .getUsersProfile(widget.userId);
-                await ref
-                    .read(postViewModelProvider.notifier)
-                    .loadUserPosts(widget.userId);
+                await _loadAll(viewingUserId);
               },
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -91,15 +150,18 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                       posts: user.postCount ?? 0,
                       followers: user.followerCount ?? 0,
                       following: user.followingCount ?? 0,
-                      onFollow: () {
-                        // TODO: wire follow/unfollow later
-                      },
+                      onFollowersTap: openFollowers,
+                      onFollowingTap: openFollowing,
+                      showFollowButton: !isMe,
+                      followBusy: busy,
+                      followStatusUnknown: statusUnknown,
+                      currentlyFollowing: currentlyFollowing,
+                      onFollow: onFollowPressed,
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
                   const SliverToBoxAdapter(child: _ProfileTabs()),
                   const SliverToBoxAdapter(child: Divider(height: 1)),
-
                   ProfilePostGrid(
                     posts: postState.userPosts,
                     loading: postState.userPostsLoading,
@@ -107,7 +169,6 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                       showPostDetailsModal(context, post);
                     },
                   ),
-
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
                 ],
               ),
@@ -126,6 +187,12 @@ class _UserProfileHeader extends StatelessWidget {
     required this.followers,
     required this.following,
     required this.onFollow,
+    required this.onFollowersTap,
+    required this.onFollowingTap,
+    required this.showFollowButton,
+    required this.currentlyFollowing,
+    required this.followBusy,
+    required this.followStatusUnknown,
   });
 
   final String? avatar;
@@ -135,12 +202,21 @@ class _UserProfileHeader extends StatelessWidget {
   final int posts;
   final int followers;
   final int following;
+
   final VoidCallback onFollow;
+  final VoidCallback onFollowersTap;
+  final VoidCallback onFollowingTap;
+
+  final bool showFollowButton;
+  final bool currentlyFollowing;
+  final bool followBusy;
+  final bool followStatusUnknown;
 
   String? _resolveAvatarUrl(String? avatar) {
     if (avatar == null || avatar.trim().isEmpty) return null;
-    if (avatar.startsWith('http://') || avatar.startsWith('https://'))
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
       return avatar;
+    }
     final fileName = avatar.split('/').last;
     return '${ApiEndpoints.profileImages}/$fileName';
   }
@@ -148,6 +224,10 @@ class _UserProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = _resolveAvatarUrl(avatar);
+
+    final String buttonText = followStatusUnknown
+        ? "Loading..."
+        : (currentlyFollowing ? "Following" : "Follow");
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -181,13 +261,21 @@ class _UserProfileHeader extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _ProfileStat(title: "Posts", value: posts.toString()),
-                    _ProfileStat(
-                      title: "Followers",
-                      value: followers.toString(),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: onFollowersTap,
+                      child: _ProfileStat(
+                        title: "Followers",
+                        value: followers.toString(),
+                      ),
                     ),
-                    _ProfileStat(
-                      title: "Following",
-                      value: following.toString(),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: onFollowingTap,
+                      child: _ProfileStat(
+                        title: "Following",
+                        value: following.toString(),
+                      ),
                     ),
                   ],
                 ),
@@ -225,30 +313,50 @@ class _UserProfileHeader extends StatelessWidget {
           ] else ...[
             const SizedBox(height: 14),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onFollow,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC974A6),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+          if (showFollowButton)
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: followBusy ? null : onFollow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: currentlyFollowing
+                          ? Colors.grey.shade300
+                          : const Color(0xFFC974A6),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    "Follow",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (followBusy) ...[
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        Text(
+                          buttonText,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: currentlyFollowing
+                                ? Colors.black
+                                : Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -257,6 +365,7 @@ class _UserProfileHeader extends StatelessWidget {
 
 class _ProfileTabs extends StatelessWidget {
   const _ProfileTabs();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -277,11 +386,12 @@ class _TabIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
   const _TabIcon({required this.icon, this.active = false});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: active ? Colors.black : Colors.grey.shade500),
+        Icon(icon, color: active ? Colors.black : Colors.grey),
         const SizedBox(height: 8),
         Container(
           height: 2,
@@ -297,6 +407,7 @@ class _ProfileStat extends StatelessWidget {
   final String title;
   final String value;
   const _ProfileStat({required this.title, required this.value});
+
   @override
   Widget build(BuildContext context) {
     return Column(

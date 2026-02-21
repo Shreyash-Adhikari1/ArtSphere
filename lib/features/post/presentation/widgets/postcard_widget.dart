@@ -85,10 +85,6 @@ class PostcardWidget extends ConsumerWidget {
       final userId = currentPost.author?.userId;
       if (userId == null) return;
       AppRoutes.push(context, UserProfilePage(userId: userId));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Navigate to user profile: $userId")),
-      );
     }
 
     Future<void> toggleLike() async {
@@ -211,10 +207,7 @@ class PostcardWidget extends ConsumerWidget {
 
               IconButton(
                 onPressed: () {
-                  showPostDetailsModal(
-                    context,
-                    currentPost,
-                  ); // ✅ open the same modal
+                  showPostDetailsModal(context, currentPost);
                 },
                 icon: const Icon(Icons.mode_comment_outlined, size: 24),
               ),
@@ -223,9 +216,7 @@ class PostcardWidget extends ConsumerWidget {
               const Spacer(),
 
               IconButton(
-                onPressed: () {
-                  // TODO: save/bookmark action
-                },
+                onPressed: () {},
                 icon: const Icon(Icons.bookmark_border, size: 26),
               ),
             ],

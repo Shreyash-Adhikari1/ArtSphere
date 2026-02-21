@@ -44,29 +44,6 @@ class FollowViewModel extends Notifier<FollowState> {
     state = state.copyWith(followBusy: next);
   }
 
-  // isFollowedByMe exists in follower rows-> kasle malai follow garxa flag
-
-  List<FollowEntity> _toggleFollowedByMeInFollowersList(
-    List<FollowEntity> list,
-    String followerUserId,
-    bool value,
-  ) {
-    return list.map((f) {
-      final id = f.follower?.userId;
-      if (id == followerUserId) {
-        return FollowEntity(
-          followId: f.followId,
-          follower: f.follower,
-          following: f.following,
-          isFollowActive: f.isFollowActive,
-          isFollowedByMe: value,
-          createdAt: f.createdAt,
-        );
-      }
-      return f;
-    }).toList();
-  }
-
   List<FollowEntity> _setIsFollowedByMeInList(
     List<FollowEntity> list,
     String userId,

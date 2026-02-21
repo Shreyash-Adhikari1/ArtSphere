@@ -13,6 +13,7 @@ class FollowState extends Equatable {
 
   // Per-user follow/unfollow lock
   final Map<String, bool> followBusy;
+  final Map<String, bool> isFollowingCache;
 
   // Data
   final List<FollowEntity> myFollowers;
@@ -32,6 +33,7 @@ class FollowState extends Equatable {
     this.loadingUserFollowing = false,
     this.actionLoading = false,
     this.followBusy = const {},
+    this.isFollowingCache = const {},
     this.myFollowers = const [],
     this.myFollowing = const [],
     this.userFollowers = const [],
@@ -47,6 +49,7 @@ class FollowState extends Equatable {
     bool? loadingUserFollowing,
     bool? actionLoading,
     Map<String, bool>? followBusy,
+    Map<String, bool>? isFollowingCache,
     List<FollowEntity>? myFollowers,
     List<FollowEntity>? myFollowing,
     List<FollowEntity>? userFollowers,
@@ -62,6 +65,7 @@ class FollowState extends Equatable {
       loadingUserFollowing: loadingUserFollowing ?? this.loadingUserFollowing,
       actionLoading: actionLoading ?? this.actionLoading,
       followBusy: followBusy ?? this.followBusy,
+      isFollowingCache: isFollowingCache ?? this.isFollowingCache,
       myFollowers: myFollowers ?? this.myFollowers,
       myFollowing: myFollowing ?? this.myFollowing,
       userFollowers: userFollowers ?? this.userFollowers,
@@ -79,6 +83,7 @@ class FollowState extends Equatable {
     loadingUserFollowing,
     actionLoading,
     followBusy,
+    isFollowingCache,
     myFollowers,
     myFollowing,
     userFollowers,

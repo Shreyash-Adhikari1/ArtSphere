@@ -4,6 +4,8 @@ import 'package:artsphere/features/auth/presentation/pages/edit_profile_page.dar
 import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
+import 'package:artsphere/features/follow/presentation/viewmodels/follow_viewmodel.dart';
+import 'package:artsphere/features/follow/presentation/widgets/follow_list_modal.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
 import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
 import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
@@ -107,7 +109,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const SizedBox(width: 8),
         ],
       ),
-
       body: userState.status == UserStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : userState.userEntity == null
@@ -115,25 +116,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(userViewModelProvider.notifier).getProfile();
-                // await ref.read(postViewModelProvider.notifier).getMyPosts();
+                await ref.read(postViewModelProvider.notifier).loadMyPosts();
               },
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _ProfileHeader()),
-
+                  const SliverToBoxAdapter(child: _ProfileHeader()),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
                   const SliverToBoxAdapter(child: _ProfileTabs()),
-
                   const SliverToBoxAdapter(child: Divider(height: 1)),
-
                   ProfilePostGrid(
                     posts: ref.watch(postViewModelProvider).myPosts,
                     loading: ref.watch(postViewModelProvider).myPostsLoading,
                     onTapPost: (post) => showPostDetailsModal(context, post),
                   ),
-
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
                 ],
               ),
@@ -149,31 +145,59 @@ class _ProfileHeader extends ConsumerWidget {
 
   String? _resolveAvatarUrl(String? avatar) {
     if (avatar == null || avatar.trim().isEmpty) return null;
-
     if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
       return avatar;
     }
-
-    // If backend stores full path, keep only last segment
     final fileName = avatar.split('/').last;
     return '${ApiEndpoints.profileImages}/$fileName';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userViewModelProvider).userEntity!;
+    final userVm = ref.read(userViewModelProvider.notifier);
+    final followVm = ref.read(followViewModelProvider.notifier);
+
+    final userState = ref.watch(userViewModelProvider);
+    final user = userState.userEntity!;
     final avatarUrl = _resolveAvatarUrl(user.avatar);
 
     final posts = user.postCount ?? 0;
     final following = user.followingCount ?? 0;
     final followers = user.followerCount ?? 0;
 
+    final myUserId = user.userId;
+
+    Future<void> openFollowers() async {
+      // Ensure we have latest "my followers" list before opening (optional)
+      await followVm.loadMyFollowers();
+
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.followers,
+        userId: null, // my list
+      );
+
+      // Refresh counts after modal closes
+      await userVm.getProfile();
+    }
+
+    Future<void> openFollowing() async {
+      await followVm.loadMyFollowing();
+
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.following,
+        userId: null, // my list
+      );
+
+      await userVm.getProfile();
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar + stats row (Instagram-ish)
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -214,30 +238,38 @@ class _ProfileHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-
               const SizedBox(width: 18),
-
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _ProfileStat(title: "Posts", value: posts.toString()),
-                    _ProfileStat(
-                      title: "Followers",
-                      value: followers.toString(),
+
+                    // ✅ clickable Followers -> modal (Follow back)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: myUserId == null ? null : openFollowers,
+                      child: _ProfileStat(
+                        title: "Followers",
+                        value: followers.toString(),
+                      ),
                     ),
-                    _ProfileStat(
-                      title: "Following",
-                      value: following.toString(),
+
+                    // ✅ clickable Following -> modal (Unfollow)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: myUserId == null ? null : openFollowing,
+                      child: _ProfileStat(
+                        title: "Following",
+                        value: following.toString(),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
           Text(
             "@${user.username}",
             style: const TextStyle(
@@ -246,9 +278,7 @@ class _ProfileHeader extends ConsumerWidget {
               color: Colors.black,
             ),
           ),
-
           const SizedBox(height: 6),
-
           Text(
             user.fullName,
             style: TextStyle(
@@ -270,8 +300,6 @@ class _ProfileHeader extends ConsumerWidget {
           ] else ...[
             const SizedBox(height: 14),
           ],
-
-          // Buttons row
           Row(
             children: [
               Expanded(
@@ -306,7 +334,6 @@ class _ProfileHeader extends ConsumerWidget {
 class _ProfileStat extends StatelessWidget {
   final String title;
   final String value;
-
   const _ProfileStat({required this.title, required this.value});
 
   @override
@@ -340,7 +367,6 @@ class _ProfileTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // For now just visual tabs
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       child: Row(
@@ -358,7 +384,6 @@ class _ProfileTabs extends StatelessWidget {
 class _TabIcon extends StatelessWidget {
   final IconData icon;
   final bool active;
-
   const _TabIcon({required this.icon, this.active = false});
 
   @override
