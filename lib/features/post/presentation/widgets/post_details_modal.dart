@@ -68,7 +68,6 @@ class _PostDetailsSheetState extends ConsumerState<_PostDetailsSheet> {
     final postState = ref.watch(postViewModelProvider);
     final postVm = ref.read(postViewModelProvider.notifier);
 
-    final commentState = ref.watch(commentViewModelProvider);
     final commentVm = ref.read(commentViewModelProvider.notifier);
 
     PostEntity currentPost = widget.post;
