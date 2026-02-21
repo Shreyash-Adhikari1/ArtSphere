@@ -70,6 +70,17 @@ class ApiEndpoints {
   static String getUsersFollowing(String id) => '/follow/$id/following';
   static String getIsFollowingStatus(String id) => "/follow/is-following/$id";
 
+  // ================= Challenge Endpoints ================
+  static const String challenge = '/challenge';
+  static const String createChallenge = '/challenge/create';
+  static String editChallenge(String id) => '/challenge/edit/$id';
+  static const String getAllChallenges = '/challenge/getall';
+  static String getChallengeById(String id) => '/challenge/$id';
+  static const String getMyChallenges = '/challenge/getmy';
+  static String deleteChallenge(String id) => '/challenge/delete/$id';
+  static const String deleteAllMyChallenges =
+      '/challenge/delete/all-my-challenges';
+
   // ============ Batch Endpoints ============
   static const String batches = '/batches';
   static String batchById(String id) => '/batches/$id';
