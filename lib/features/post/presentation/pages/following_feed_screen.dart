@@ -16,7 +16,6 @@ class _FollowingFeedScreenState extends ConsumerState<FollowingFeedScreen> {
   void initState() {
     super.initState();
 
-    // Load once after first frame (safe for Riverpod + context)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(postViewModelProvider.notifier).loadFollowingFeed();
     });
