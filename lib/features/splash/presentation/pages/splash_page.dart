@@ -1,6 +1,6 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/services/storage/user_session_service.dart';
-import 'package:artsphere/screens/home/home_screen.dart';
+import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart'; 

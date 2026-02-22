@@ -2,7 +2,7 @@ import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
-import 'package:artsphere/screens/home/home_screen.dart';
+import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
 import 'package:artsphere/features/auth/presentation/pages/signup_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';

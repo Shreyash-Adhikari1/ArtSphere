@@ -1,8 +1,8 @@
 import 'package:artsphere/features/auth/presentation/pages/profile_page.dart';
 import 'package:artsphere/features/challenge/presentation/pages/challenge_page.dart';
 import 'package:artsphere/features/post/presentation/pages/add_post_page.dart';
-import 'package:artsphere/screens/home/discover_screen.dart';
-import 'package:artsphere/screens/home/following_feed_screen.dart';
+import 'package:artsphere/features/post/presentation/pages/discover_feed_screen.dart';
+import 'package:artsphere/features/post/presentation/pages/following_feed_screen.dart';
 import 'package:flutter/material.dart';
 
 class DiscoverTabShell extends StatefulWidget {
