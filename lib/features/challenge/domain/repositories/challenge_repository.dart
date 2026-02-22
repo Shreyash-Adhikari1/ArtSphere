@@ -7,7 +7,7 @@ import 'package:dartz/dartz.dart';
 abstract interface class IChallengeRepository {
   // Create and Update
   Future<Either<Failure, ChallengeEntity>> createChallenge({
-    CreateChallengeUsecaseParams params,
+    required CreateChallengeUsecaseParams params,
   });
   Future<Either<Failure, ChallengeEntity>> editChallenge(
     EditChallengeUsecaseParams params,
@@ -17,11 +17,11 @@ abstract interface class IChallengeRepository {
   Future<Either<Failure, List<ChallengeEntity>>> getAllChallenges();
   Future<Either<Failure, List<ChallengeEntity>>> getMyChallenges();
   Future<Either<Failure, ChallengeEntity>> getChallengeById(String challengeId);
-  Future<Either<Failure, List<ChallengeEntity>>> getChallengesByUser(
-    String userId,
-  );
+  // Future<Either<Failure, List<ChallengeEntity>>> getChallengesByUser(
+  //   String userId,
+  // );
 
   // Delete
-  Future<Either<Failure, bool>> deleteChalllenge(String challengeId);
+  Future<Either<Failure, bool>> deleteChallenge(String challengeId);
   Future<Either<Failure, bool>> deleteAllMyChallenges();
 }
