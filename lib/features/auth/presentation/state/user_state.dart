@@ -1,7 +1,16 @@
 import 'package:artsphere/features/auth/domain/entities/user_entity.dart';
 import 'package:equatable/equatable.dart';
 
-enum UserStatus { initial,loading, authenticated, unauthenticated,registered, error }
+enum UserStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  registered,
+  edited,
+  error,
+  success,
+}
 
 class UserState extends Equatable {
   final UserStatus status;
@@ -9,7 +18,7 @@ class UserState extends Equatable {
   final String? errorMessage;
 
   const UserState({
-    this.status=UserStatus.initial,
+    this.status = UserStatus.initial,
     this.userEntity,
     this.errorMessage,
   });
@@ -17,14 +26,15 @@ class UserState extends Equatable {
   UserState copyWith({
     UserStatus? status,
     UserEntity? userEntity,
-    String? errorMessage
-  }){
+    String? errorMessage,
+  }) {
     return UserState(
       status: status ?? this.status,
       userEntity: userEntity ?? this.userEntity,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
+
   @override
   List<Object?> get props => [status, userEntity, errorMessage];
 }

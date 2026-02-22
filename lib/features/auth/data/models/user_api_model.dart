@@ -1,6 +1,11 @@
 import 'package:artsphere/features/auth/domain/entities/user_entity.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'user_api_model.g.dart';
+
+@JsonSerializable()
 class UserApiModel {
+  @JsonKey(name: "_id")
   final String? id;
   final String fullName;
   final String username;
@@ -9,6 +14,11 @@ class UserApiModel {
   final String? confirmPassword;
   final String? phoneNumber;
   final String? address;
+  final String? avatar;
+  final int? followerCount;
+  final int? followingCount;
+  final int? postCount;
+  final List<String>? posts;
 
   UserApiModel({
     this.id,
@@ -19,36 +29,46 @@ class UserApiModel {
     this.confirmPassword,
     this.phoneNumber,
     this.address,
+    this.avatar,
+    this.followerCount,
+    this.followingCount,
+    this.postCount,
+    this.posts,
   });
 
-  // To JSON
-  // Using dynamic because user le j pani value pathauna paayo
-  Map<String, dynamic> toJson() {
-    return {
-      "fullName": fullName,
-      "username": username,
-      "email": email,
-      "password": password,
-      "confirmPassword":confirmPassword,
-      "phoneNumber": phoneNumber,
-      "address": address,
-    };
-  }
+  factory UserApiModel.fromJson(Map<String, dynamic> json) =>
+      _$UserApiModelFromJson(json);
 
-  // From JSON
+  Map<String, dynamic> toJson() => _$UserApiModelToJson(this);
 
-  factory UserApiModel.fromJson(Map<String, dynamic> json) {
-    final userJson = json['user'] ?? json;  // null safety measure. the code kept throwing it because some feilds were being returned null
-    return UserApiModel(
-      id: userJson['_id'] as String?,
-      fullName: userJson['fullName'] as String? ?? '',
-      username: userJson['username'] as String? ?? '',
-      email: userJson['email'] as String? ?? '',
-      password: userJson['password'] as String? ?? '',
-      phoneNumber: userJson['phoneNumber'] as String? ?? '',
-      address: userJson['address'] as String? ?? '',
-    );
-  }
+  // // To JSON
+  // // Using dynamic because user le j pani value pathauna paayo
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     "fullName": fullName,
+  //     "username": username,
+  //     "email": email,
+  //     "password": password,
+  //     "confirmPassword":confirmPassword,
+  //     "phoneNumber": phoneNumber,
+  //     "address": address,
+  //   };
+  // }
+
+  // // From JSON
+
+  // factory UserApiModel.fromJson(Map<String, dynamic> json) {
+  //   final userJson = json['user'] ?? json;  // null safety measure. the code kept throwing it because some feilds were being returned null
+  //   return UserApiModel(
+  //     id: userJson['_id'] as String?,
+  //     fullName: userJson['fullName'] as String? ?? '',
+  //     username: userJson['username'] as String? ?? '',
+  //     email: userJson['email'] as String? ?? '',
+  //     password: userJson['password'] as String? ?? '',
+  //     phoneNumber: userJson['phoneNumber'] as String? ?? '',
+  //     address: userJson['address'] as String? ?? '',
+  //   );
+  // }
 
   // To Entity
   UserEntity toEntity() {
@@ -61,6 +81,11 @@ class UserApiModel {
       confirmPassword: confirmPassword,
       address: address,
       phoneNumber: phoneNumber,
+      avatar: avatar,
+      followerCount: followerCount,
+      followingCount: followingCount,
+      postCount: postCount,
+      posts: posts,
     );
   }
 
@@ -74,6 +99,11 @@ class UserApiModel {
       confirmPassword: entity.confirmPassword,
       phoneNumber: entity.phoneNumber,
       address: entity.address,
+      avatar: entity.avatar,
+      followerCount: entity.followerCount,
+      followingCount: entity.followingCount,
+      postCount: entity.postCount,
+      posts: entity.posts,
     );
   }
 
