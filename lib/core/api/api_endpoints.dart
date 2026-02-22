@@ -23,6 +23,11 @@ class ApiEndpoints {
   static String get mediaServerUrl => serverUrl;
 
   static String get profileImages => '$mediaServerUrl/uploads/profile-image';
+  static String get postImages => '$mediaServerUrl/uploads/post-images';
+  static String get challengeImages =>
+      '$mediaServerUrl/uploads/challenge-images';
+  static String get challengeSubmissions =>
+      '$mediaServerUrl/uploads/challenge-submissions';
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -38,18 +43,43 @@ class ApiEndpoints {
   // ============= Post Endpoints =============
   static const String posts = '/post';
   static const String createPost = '/post/create';
-  static const String getPosts = '/post/posts';
-  static String getPostsByUser(String id) => '/post/posts/$id';
-  static String deletePost(String id) => 'post/delete/$id';
-  static String likePost(String id) => 'post/like/$id';
-  static String unlikePost(String id) => 'post/unlike/$id';
+  static String editPost(String id) => '/post/edit/$id';
+  static const String getFeed = '/post/posts';
+  static const String getMyPosts = '/post/posts/my-posts';
+  static const String getFollowingFeed = '/post/posts/following';
+  static String getPostsByUser(String id) => '/post/posts/user/$id';
+  static String deletePost(String id) => '/post/delete/$id';
+  static String likePost(String id) => '/post/like/$id';
+  static String unlikePost(String id) => '/post/unlike/$id';
 
   // ============== Comment Endpoints ==============
   static const String comments = '/comment';
-  static String createComment(String id) => 'comment/create/$id';
-  static String deleteComment(String id) => 'comment/delete/$id';
-  static String likeComment(String id) => 'comment/like/$id';
-  static String unlikeComment(String id) => 'comment/unlike/$id';
+  static String createComment(String id) => '/comment/create/$id';
+  static String getCommentsForPost(String id) => '/comment/post/$id';
+  static String deleteComment(String id) => '/comment/delete/$id';
+  static String likeComment(String id) => '/comment/like/$id';
+  static String unlikeComment(String id) => '/comment/unlike/$id';
+
+  // ============== Follow Endpoints ================
+  static const String follow = '/follow';
+  static String followUser(String id) => '/follow/follow/$id';
+  static String unfollowUser(String id) => '/follow/unfollow/$id';
+  static const String getMyFollowers = '/follow/followers';
+  static const String getMyFollowing = '/follow/following';
+  static String getUsersFollowers(String id) => '/follow/$id/followers';
+  static String getUsersFollowing(String id) => '/follow/$id/following';
+  static String getIsFollowingStatus(String id) => "/follow/is-following/$id";
+
+  // ================= Challenge Endpoints ================
+  static const String challenge = '/challenge';
+  static const String createChallenge = '/challenge/create';
+  static String editChallenge(String id) => '/challenge/edit/$id';
+  static const String getAllChallenges = '/challenge/getall';
+  static String getChallengeById(String id) => '/challenge/$id';
+  static const String getMyChallenges = '/challenge/getmy';
+  static String deleteChallenge(String id) => '/challenge/delete/$id';
+  static const String deleteAllMyChallenges =
+      '/challenge/delete/all-my-challenges';
 
   // ============ Batch Endpoints ============
   static const String batches = '/batches';

@@ -1,10 +1,14 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
-import 'package:artsphere/features/post/presentation/states/post_state.dart';
+import 'package:artsphere/features/follow/presentation/viewmodels/follow_viewmodel.dart';
+import 'package:artsphere/features/follow/presentation/widgets/follow_list_modal.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
+import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
+import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,29 +24,89 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      ref.read(userViewModelProvider.notifier).getProfile();
-      // later:
-      // ref.read(postViewModelProvider.notifier).getMyPosts();
+    Future.microtask(() async {
+      await ref.read(userViewModelProvider.notifier).getProfile();
+      await ref.read(postViewModelProvider.notifier).loadMyPosts();
     });
+  }
+
+  Future<void> _confirmLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Do you want to log out?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    await ref.read(userViewModelProvider.notifier).logout();
+
+    if (!mounted) return;
+    AppRoutes.pushAndRemoveUntil(context, LoginScreen());
   }
 
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
-    // final postState = ref.watch(postViewModelProvider);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Profile"),
-        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0.2,
+        title: const Text(
+          "Profile",
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: navigate to settings
+          PopupMenuButton<_ProfileMenuAction>(
+            icon: const Icon(Icons.settings, color: Colors.black),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            onSelected: (action) async {
+              if (action == _ProfileMenuAction.editProfile) {
+                AppRoutes.push(context, const EditProfilePage());
+              } else if (action == _ProfileMenuAction.logout) {
+                await _confirmLogout();
+              }
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _ProfileMenuAction.editProfile,
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 10),
+                    Text("Edit profile"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: _ProfileMenuAction.logout,
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 18, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text("Logout", style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: userState.status == UserStatus.loading
@@ -52,101 +116,214 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(userViewModelProvider.notifier).getProfile();
+                await ref.read(postViewModelProvider.notifier).loadMyPosts();
               },
-              child: SingleChildScrollView(
+              child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-
-                    /// PROFILE HEADER
-                    _ProfileHeader(),
-
-                    const SizedBox(height: 16),
-                    const Divider(),
-
-                    /// TABS (icons row like your design)
-                    _ProfileTabs(),
-
-                    const Divider(),
-
-                    /// POSTS GRID
-                    _PostsGrid(),
-                  ],
-                ),
+                slivers: [
+                  const SliverToBoxAdapter(child: _ProfileHeader()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: _ProfileTabs()),
+                  const SliverToBoxAdapter(child: Divider(height: 1)),
+                  ProfilePostGrid(
+                    posts: ref.watch(postViewModelProvider).myPosts,
+                    loading: ref.watch(postViewModelProvider).myPostsLoading,
+                    onTapPost: (post) => showPostDetailsModal(context, post),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                ],
               ),
             ),
     );
   }
 }
 
+enum _ProfileMenuAction { editProfile, logout }
+
 class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader();
+
+  String? _resolveAvatarUrl(String? avatar) {
+    if (avatar == null || avatar.trim().isEmpty) return null;
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+      return avatar;
+    }
+    final fileName = avatar.split('/').last;
+    return '${ApiEndpoints.profileImages}/$fileName';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userViewModelProvider).userEntity!;
+    final userVm = ref.read(userViewModelProvider.notifier);
+    final followVm = ref.read(followViewModelProvider.notifier);
 
-    final avatar = user.avatar;
-    final String? avatarUrl = (avatar == null || avatar.trim().isEmpty)
-        ? null
-        : (avatar.startsWith('http://') || avatar.startsWith('https://'))
-        ? avatar
-        : '${ApiEndpoints.profileImages}/${avatar.split('/').last}';
+    final userState = ref.watch(userViewModelProvider);
+    final user = userState.userEntity!;
+    final avatarUrl = _resolveAvatarUrl(user.avatar);
+
+    final posts = user.postCount ?? 0;
+    final following = user.followingCount ?? 0;
+    final followers = user.followerCount ?? 0;
+
+    final myUserId = user.userId;
+
+    Future<void> openFollowers() async {
+      // Ensure we have latest "my followers" list before opening (optional)
+      await followVm.loadMyFollowers();
+
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.followers,
+        userId: null, // my list
+      );
+
+      // Refresh counts after modal closes
+      await userVm.getProfile();
+    }
+
+    Future<void> openFollowing() async {
+      await followVm.loadMyFollowing();
+
+      await showFollowListModal(
+        context: context,
+        mode: FollowListMode.following,
+        userId: null, // my list
+      );
+
+      await userVm.getProfile();
+    }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: Colors.grey.shade300,
-                backgroundImage: avatarUrl != null
-                    ? NetworkImage(avatarUrl)
-                    : null,
-                child: avatarUrl == null
-                    ? const Icon(Icons.person, size: 40)
-                    : null,
-              ),
-
-              const SizedBox(width: 24),
-
-              Text(
-                "@${user.username}",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.redAccent,
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFF58529),
+                      Color(0xFFDD2A7B),
+                      Color(0xFF8134AF),
+                      Color(0xFF515BD4),
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: avatarUrl != null
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl == null
+                        ? const Icon(
+                            Icons.person,
+                            size: 38,
+                            color: Colors.black54,
+                          )
+                        : null,
+                  ),
                 ),
               ),
-
+              const SizedBox(width: 18),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _ProfileStat(
-                      title: "posts",
-                      value: user.followerCount.toString(),
+                    _ProfileStat(title: "Posts", value: posts.toString()),
+
+                    // ✅ clickable Followers -> modal (Follow back)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: myUserId == null ? null : openFollowers,
+                      child: _ProfileStat(
+                        title: "Followers",
+                        value: followers.toString(),
+                      ),
                     ),
-                    _ProfileStat(
-                      title: "following",
-                      value: user.followingCount.toString(),
-                    ),
-                    _ProfileStat(
-                      title: "followers",
-                      value: user.postCount.toString(),
+
+                    // ✅ clickable Following -> modal (Unfollow)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: myUserId == null ? null : openFollowing,
+                      child: _ProfileStat(
+                        title: "Following",
+                        value: following.toString(),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-
-          TextButton(
-            onPressed: () {
-              AppRoutes.push(context, const EditProfilePage());
-            },
-            child: const Text("Edit Profile"),
+          const SizedBox(height: 14),
+          Text(
+            "@${user.username}",
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            user.fullName,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (user.bio != null && user.bio!.trim().isNotEmpty) ...[
+            Text(
+              user.bio!,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade800,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 14),
+          ] else ...[
+            const SizedBox(height: 14),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    AppRoutes.push(context, const EditProfilePage());
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    "Edit Profile",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -157,7 +334,6 @@ class _ProfileHeader extends ConsumerWidget {
 class _ProfileStat extends StatelessWidget {
   final String title;
   final String value;
-
   const _ProfileStat({required this.title, required this.value});
 
   @override
@@ -166,67 +342,62 @@ class _ProfileStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: Colors.black,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(title, style: const TextStyle(color: Colors.grey)),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _ProfileTabs extends StatelessWidget {
+  const _ProfileTabs();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: const [
-          Icon(Icons.grid_view_rounded),
-          Icon(Icons.favorite_border),
-          Icon(Icons.bookmark_border),
+          _TabIcon(icon: Icons.grid_on_rounded, active: true),
+          _TabIcon(icon: Icons.favorite_border),
+          _TabIcon(icon: Icons.bookmark_border),
         ],
       ),
     );
   }
 }
 
-class _PostsGrid extends ConsumerWidget {
+class _TabIcon extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  const _TabIcon({required this.icon, this.active = false});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final postState = ref.watch(postViewModelProvider);
-
-    if (postState.status == PostStatus.loading) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    final posts = postState.posts;
-
-    if (posts.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
-        child: Text("No posts yet"),
-      );
-    }
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(2),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
-      ),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return Image.network(post.media!, fit: BoxFit.cover);
-      },
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: active ? Colors.black : Colors.grey.shade500),
+        const SizedBox(height: 8),
+        Container(
+          height: 2,
+          width: 28,
+          color: active ? Colors.black : Colors.transparent,
+        ),
+      ],
     );
   }
 }

@@ -3,8 +3,8 @@ import 'package:artsphere/core/api/api_endpoints.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
-import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_api_model.dart';
+import 'package:artsphere/features/auth/data/models/edit_user/edit_profile_api_model.dart';
+import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,7 +32,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
        _tokenService = tokenService;
 
   @override
-  Future<UserApiModel?> getProfile() async {
+  Future<UserApiModel?> getMyProfile() async {
     final token = _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getProfile,
@@ -129,5 +129,20 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
   Future<UserApiModel?> getCurrentUser() {
     // TODO: implement getCurrentUser
     throw UnimplementedError();
+  }
+
+  @override
+  Future<UserApiModel?> getUsersProfile(String userId) async {
+    final token = _tokenService.getToken();
+    final response = await _apiClient.get(
+      ApiEndpoints.userById(userId),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    if (response.data['success'] == true) {
+      final data = response.data['user'] as Map<String, dynamic>;
+      final user = UserApiModel.fromJson(data);
+      return user;
+    }
+    return null;
   }
 }

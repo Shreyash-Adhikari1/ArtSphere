@@ -1,6 +1,5 @@
 import 'package:artsphere/core/error/failures.dart';
 import 'package:artsphere/core/usecases/app_usecase.dart';
-import 'package:artsphere/features/auth/domain/repositories/user_repositroy.dart';
 import 'package:artsphere/features/post/data/repositories/post_repository.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:artsphere/features/post/domain/repositories/post_repository.dart';
@@ -9,41 +8,47 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CreatePostUsecaseParams extends Equatable {
-  final String? media;
-  final String? mediaType;
+  final String mediaPath; // local file path (required)
+  final String mediaType;
   final String? caption;
   final List<String>? tags;
+  final String visibility;
 
   const CreatePostUsecaseParams({
-    this.media,
-    this.mediaType,
+    required this.mediaPath,
+    this.mediaType = "image",
     this.caption,
     this.tags,
+    this.visibility = "public",
   });
 
   @override
-  List<Object?> get props => [media, mediaType, caption, tags];
+  List<Object?> get props => [mediaPath, mediaType, caption, tags, visibility];
 }
 
-// Create Post usecase provider
 final createPostUsecaseProvider = Provider<CreatePostUsecase>((ref) {
   return CreatePostUsecase(postRepository: ref.read(postRepositoryProvider));
 });
 
 class CreatePostUsecase
-    implements UsecaseWithParams<bool, CreatePostUsecaseParams> {
+    implements UsecaseWithParams<PostEntity, CreatePostUsecaseParams> {
   final IPostRepository _postRepository;
+
   CreatePostUsecase({required IPostRepository postRepository})
     : _postRepository = postRepository;
 
   @override
-  Future<Either<Failure, bool>> call(CreatePostUsecaseParams params) {
+  Future<Either<Failure, PostEntity>> call(CreatePostUsecaseParams params) {
     final postEntity = PostEntity(
-      media: params.media,
       mediaType: params.mediaType,
       caption: params.caption,
       tags: params.tags,
+      visibility: params.visibility,
     );
-    return _postRepository.createPost(postEntity);
+
+    return _postRepository.createPost(
+      post: postEntity,
+      mediaPath: params.mediaPath,
+    );
   }
 }

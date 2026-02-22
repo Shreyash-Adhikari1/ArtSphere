@@ -10,7 +10,10 @@ abstract interface class IUserRepository {
   Future<Either<Failure, UserEntity>> getCurrentUser();
   Future<Either<Failure, bool>> logout();
 
-  // Profile
-  Future<Either<Failure, UserEntity>> getProfile();
+  // Own Profile
+  Future<Either<Failure, UserEntity>> getMyProfile();
   Future<Either<Failure, bool>> editProfile(EditProfileUsecaseParams params);
+
+  // Other users profile
+  Future<Either<Failure, UserEntity>> getUsersProfile(String userId);
 }

@@ -2,9 +2,12 @@ import 'package:artsphere/core/error/failures.dart';
 import 'package:artsphere/core/services/connectivity/network_info.dart';
 import 'package:artsphere/features/post/data/datasources/post_datasource.dart';
 import 'package:artsphere/features/post/data/datasources/remote/post_remote_datasource.dart';
-import 'package:artsphere/features/post/data/models/post/post_api_model.dart';
+import 'package:artsphere/features/post/data/models/create/create_post_api_model.dart';
+import 'package:artsphere/features/post/data/models/edit/edit_post_api_model.dart';
+import 'package:artsphere/features/post/data/models/post_api_model.dart';
 import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:artsphere/features/post/domain/repositories/post_repository.dart';
+import 'package:artsphere/features/post/domain/usecases/edit_post_usecase.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,67 +31,226 @@ class PostRepository implements IPostRepository {
     required NetworkInfo networkInfo,
   }) : _networkInfo = networkInfo,
        _postRemoteDatasource = postRemoteDatasource;
-  @override
-  Future<Either<Failure, PostEntity>> commentOnPost(
-    String postId,
-    String userId,
-  ) {
-    // TODO: implement commentOnPost
-    throw UnimplementedError();
-  }
 
   @override
-  Future<Either<Failure, bool>> createPost(PostEntity post) async {
+  Future<Either<Failure, PostEntity>> createPost({
+    required PostEntity post,
+    required String mediaPath,
+  }) async {
     if (await _networkInfo.isConnected) {
       try {
-        final postApiModel = PostApiModel.fromEntity(post);
-        await _postRemoteDatasource.createPost(postApiModel);
-        return const Right(true);
+        final createPostApi = CreatePostApiModel(
+          caption: post.caption,
+          mediaType: post.mediaType ?? "image",
+          tags: post.tags ?? const [],
+          visibility: post.visibility ?? "public",
+        );
+
+        final createdApi = await _postRemoteDatasource.createPost(
+          createPostApi,
+          mediaPath,
+        );
+
+        return Right(createdApi.toEntity());
       } on DioException catch (e) {
         return Left(
           ApiFailure(
-            message: e.response?.data['message'] ?? "Failed to create post",
+            message: e.response?.data["message"] ?? "Failed to create post",
             statusCode: e.response?.statusCode,
           ),
         );
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(ApiFailure(message: e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: "Internet Required To Create Post"));
+      return Left(NetworkFailure(message: "Internet required to create post"));
     }
   }
 
   @override
-  Future<Either<Failure, PostEntity>> deleteComment(
-    String postId,
-    String userId,
-  ) {
-    // TODO: implement deleteComment
-    throw UnimplementedError();
+  Future<Either<Failure, bool>> editPost(EditPostUsecaseParams params) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = EditPostApiModel(
+          caption: params.caption,
+          tags: params.tags,
+          visibility: params.visibility,
+        );
+        if (params.postId.trim().isEmpty) {
+          return Left(ApiFailure(message: "PostId is required"));
+        }
+        await _postRemoteDatasource.editPost(params.postId, apiModel);
+        return const Right(true);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Edit Post Failed",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Edit Post"));
+    }
   }
 
   @override
-  Future<Either<Failure, PostEntity>> deletePost(String postId) {
-    // TODO: implement deletePost
-    throw UnimplementedError();
+  Future<Either<Failure, List<PostEntity>>> getFeed() async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final posts = await _postRemoteDatasource.getFeed();
+        final postEntity = PostApiModel.toEntityList(posts);
+        return Right(postEntity);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Get Feed",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
+    }
   }
 
   @override
-  Future<Either<Failure, List<PostEntity>>> getMyPosts(String userId) {
-    // TODO: implement getMyPosts
-    throw UnimplementedError();
+  Future<Either<Failure, List<PostEntity>>> getFollowingFeed() async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final followingPosts = await _postRemoteDatasource.getFollowingFeed();
+        final postEntities = PostApiModel.toEntityList(followingPosts);
+        return Right(postEntities);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data['message'] ?? "Failed To Get Following Feed",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet Required To Get Following Feed"),
+      );
+    }
   }
 
   @override
-  Future<Either<Failure, PostEntity>> likePost(String postId, String userId) {
-    // TODO: implement likePost
-    throw UnimplementedError();
+  Future<Either<Failure, List<PostEntity>>> getMyPosts() async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final userPosts = await _postRemoteDatasource.getMyPosts();
+        final userPostsEntities = PostApiModel.toEntityList(userPosts);
+        return Right(userPostsEntities);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Get Your Posts",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet Required To Get Your Posts"),
+      );
+    }
   }
 
   @override
-  Future<Either<Failure, PostEntity>> unlikePost(String postId, String userId) {
-    // TODO: implement unlikePost
-    throw UnimplementedError();
+  Future<Either<Failure, List<PostEntity>>> getUsersPosts(String userId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final userPosts = await _postRemoteDatasource.getPostsByUser(userId);
+        final userPostsEntities = PostApiModel.toEntityList(userPosts);
+        return Right(userPostsEntities);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Get Users Posts",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet Required To Get Users Posts"),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deletePost(String postId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        await _postRemoteDatasource.deletePost(postId);
+        return const Right(true);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Delete Post",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Delete Post"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> likePost(String postId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        await _postRemoteDatasource.likePost(postId);
+        return const Right(true);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Like Post",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Like Post"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> unlikePost(String postId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        await _postRemoteDatasource.unlikePost(postId);
+        return const Right(true);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Failed To Unlike Post",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Unlike Post"));
+    }
   }
 }

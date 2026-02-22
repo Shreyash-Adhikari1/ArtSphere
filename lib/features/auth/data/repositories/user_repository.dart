@@ -3,9 +3,9 @@ import 'package:artsphere/core/services/connectivity/network_info.dart';
 import 'package:artsphere/features/auth/data/datasources/local/user_local_datasource.dart';
 import 'package:artsphere/features/auth/data/datasources/remote/user_remote_datasource.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
-import 'package:artsphere/features/auth/data/models/edit_profile_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_api_model.dart';
-import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
+import 'package:artsphere/features/auth/data/models/edit_user/edit_profile_api_model.dart';
+import 'package:artsphere/features/auth/data/models/user/user_api_model.dart';
+import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
 import 'package:artsphere/features/auth/domain/entities/user_entity.dart';
 import 'package:artsphere/features/auth/domain/repositories/user_repositroy.dart';
 import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
@@ -169,23 +169,52 @@ class UserRepository implements IUserRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> getProfile() async {
-    try {
-      final user = await _userRemoteDatasource.getProfile();
-      if (user != null) {
-        final userEntity = user.toEntity();
-        return Right(userEntity);
+  Future<Either<Failure, UserEntity>> getMyProfile() async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final user = await _userRemoteDatasource.getMyProfile();
+        if (user != null) {
+          final userEntity = user.toEntity();
+          return Right(userEntity);
+        }
+        return Left(ApiFailure(message: "Couldnot get current user"));
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Couldnt get user",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
       }
-      return Left(ApiFailure(message: "Couldnot get current user"));
-    } on DioException catch (e) {
-      return Left(
-        ApiFailure(
-          message: e.response?.data['message'] ?? "Couldnt get user",
-          statusCode: e.response?.statusCode,
-        ),
-      );
-    } catch (e) {
-      return Left(ApiFailure(message: e.toString()));
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> getUsersProfile(String userId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final user = await _userRemoteDatasource.getUsersProfile(userId);
+        if (user != null) {
+          final userEntity = user.toEntity();
+          return Right(userEntity);
+        }
+        return Left(ApiFailure(message: "Couldnot get user"));
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message: e.response?.data['message'] ?? "Couldnt get user",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
     }
   }
 }

@@ -13,6 +13,8 @@ class PostEntity extends Equatable {
   final List<String>? likedBy;
   final int? commentCount;
   final List<String>? commentedBy;
+  final bool? isChallengeSubmission;
+  final DateTime? createdAt;
 
   const PostEntity({
     this.postId,
@@ -26,6 +28,8 @@ class PostEntity extends Equatable {
     this.likedBy,
     this.commentCount,
     this.commentedBy,
+    this.isChallengeSubmission,
+    this.createdAt,
   });
   @override
   List<Object?> get props => [
@@ -40,5 +44,7 @@ class PostEntity extends Equatable {
     likedBy,
     commentCount,
     commentedBy,
+    isChallengeSubmission,
+    createdAt,
   ];
 }

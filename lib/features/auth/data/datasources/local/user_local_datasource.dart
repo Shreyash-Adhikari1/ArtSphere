@@ -1,29 +1,35 @@
 import 'package:artsphere/core/services/hive/hive_service.dart';
+import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/data/datasources/user_datasource.dart';
-import 'package:artsphere/features/auth/data/models/user_hive_model.dart';
+import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Local datasource Provider
 final userLocalDatasourceProvider = Provider<UserLocalDatasource>((ref) {
   final hiveService = ref.read(hiveServiceProvider);
   final userSessionService = ref.read(userSessionServiceProvider);
+  final tokenService = ref.read(tokenServiceProvider);
 
   return UserLocalDatasource(
     hiveService: hiveService,
     userSessionService: userSessionService,
+    tokenService: tokenService,
   );
 });
 
 class UserLocalDatasource implements IUserLocalDatasource {
   final HiveService _hiveService;
   final UserSessionService _userSessionService;
+  final TokenService _tokenService;
 
   UserLocalDatasource({
     required HiveService hiveService,
     required UserSessionService userSessionService,
+    required TokenService tokenService,
   }) : _hiveService = hiveService,
-      _userSessionService = userSessionService;
+       _userSessionService = userSessionService,
+       _tokenService = tokenService;
 
   @override
   Future<UserHiveModel?> getCurrentUser() {
@@ -65,14 +71,16 @@ class UserLocalDatasource implements IUserLocalDatasource {
   Future<bool> logout() async {
     try {
       await _hiveService.logout();
-      return Future.value(true);
-    } catch (e) {
-      return Future.value(false);
+      await _tokenService.removeToken();
+      await _userSessionService.clearSession();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
   @override
   Future<UserHiveModel> registerUser(UserHiveModel model) async {
-      return await _hiveService.registerUser(model);
+    return await _hiveService.registerUser(model);
   }
 }
