@@ -7,42 +7,31 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class EditChallengeUsecaseParams extends Equatable {
+class GetChallengeByIdUsecaseParams extends Equatable {
   final String challengeId;
-  final String? challengeTitle;
-  final String? challengeDescription;
-  final DateTime? endsAt;
-  const EditChallengeUsecaseParams({
-    this.challengeTitle,
-    this.challengeDescription,
-    this.endsAt,
-    required this.challengeId,
-  });
+  const GetChallengeByIdUsecaseParams({required this.challengeId});
   @override
-  List<Object?> get props => [
-    challengeId,
-    challengeTitle,
-    challengeDescription,
-    endsAt,
-  ];
+  List<Object?> get props => [challengeId];
 }
 
-final editChallengeUsecaseProvider = Provider<EditChallengeUsecase>((ref) {
-  return EditChallengeUsecase(
+final getChallengeByIdUsecaseProvider = Provider<GetChallengeByIdUsecase>((
+  ref,
+) {
+  return GetChallengeByIdUsecase(
     challengeRepository: ref.read(challengeRepositoryProvider),
   );
 });
 
-class EditChallengeUsecase
-    implements UsecaseWithParams<ChallengeEntity, EditChallengeUsecaseParams> {
+class GetChallengeByIdUsecase
+    implements
+        UsecaseWithParams<ChallengeEntity, GetChallengeByIdUsecaseParams> {
   final IChallengeRepository _challengeRepository;
-  EditChallengeUsecase({required IChallengeRepository challengeRepository})
+  GetChallengeByIdUsecase({required IChallengeRepository challengeRepository})
     : _challengeRepository = challengeRepository;
-
   @override
   Future<Either<Failure, ChallengeEntity>> call(
-    EditChallengeUsecaseParams params,
+    GetChallengeByIdUsecaseParams params,
   ) {
-    return _challengeRepository.editChallenge(params);
+    return _challengeRepository.getChallengeById(params.challengeId);
   }
 }
