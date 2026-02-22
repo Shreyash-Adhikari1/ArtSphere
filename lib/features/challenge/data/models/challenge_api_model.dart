@@ -78,4 +78,9 @@ class ChallengeApiModel {
       endsAt: challenge.endsAt,
     );
   }
+
+  // To Entity List
+  static List<ChallengeEntity> toEntityList(List<ChallengeApiModel> model) {
+    return model.map((model) => model.toEntity()).toList();
+  }
 }

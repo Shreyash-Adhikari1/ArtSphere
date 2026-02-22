@@ -1,5 +1,6 @@
 import 'package:artsphere/features/challenge/data/models/challenge_api_model.dart';
 import 'package:artsphere/features/challenge/data/models/create/create_challenge_api_model.dart';
+import 'package:artsphere/features/challenge/data/models/edit/edit_challenge_api_model.dart';
 
 abstract interface class IChallengeRemoteDatasource {
   Future<ChallengeApiModel> createChallenge(
@@ -9,7 +10,7 @@ abstract interface class IChallengeRemoteDatasource {
 
   Future<ChallengeApiModel> editChallenge(
     String challengeId,
-    CreateChallengeApiModel challenge,
+    EditChallengeApiModel challenge,
   );
 
   Future<List<ChallengeApiModel>> getAllChallenges();

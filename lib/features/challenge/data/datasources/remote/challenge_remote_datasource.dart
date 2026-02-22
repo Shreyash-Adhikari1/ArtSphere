@@ -5,6 +5,7 @@ import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/features/challenge/data/datasources/challenge_datasource.dart';
 import 'package:artsphere/features/challenge/data/models/challenge_api_model.dart';
 import 'package:artsphere/features/challenge/data/models/create/create_challenge_api_model.dart';
+import 'package:artsphere/features/challenge/data/models/edit/edit_challenge_api_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -70,7 +71,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
   @override
   Future<ChallengeApiModel> editChallenge(
     String challengeId,
-    CreateChallengeApiModel challenge,
+    EditChallengeApiModel challenge,
   ) async {
     final token = _tokenService.getToken();
     final response = await _apiClient.patch(
