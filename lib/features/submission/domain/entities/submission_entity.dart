@@ -5,14 +5,14 @@ class SubmissionEntity extends Equatable {
   final String? submissionId;
   final String challengeId;
   final String submitterId;
-  final PostEntity submittedPostId;
+  final PostEntity submittedPost;
   final DateTime? createdAt;
 
   const SubmissionEntity({
     this.submissionId,
     required this.challengeId,
     required this.submitterId,
-    required this.submittedPostId,
+    required this.submittedPost,
     this.createdAt,
   });
 
@@ -21,7 +21,7 @@ class SubmissionEntity extends Equatable {
     submissionId,
     challengeId,
     submitterId,
-    submittedPostId,
+    submittedPost,
     createdAt,
   ];
 }
