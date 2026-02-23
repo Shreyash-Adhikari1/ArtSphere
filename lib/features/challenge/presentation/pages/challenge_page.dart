@@ -12,7 +12,6 @@ class ChallengesScreen extends ConsumerStatefulWidget {
 }
 
 class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
-  static const _pink = Color(0xFFC974A6);
   int _tab = 0; // 0 = Discover, 1 = My Challenges
 
   @override
