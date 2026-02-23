@@ -10,6 +10,8 @@ enum UserStatus {
   edited,
   error,
   success,
+  resetLinkSent,
+  passwordReset,
   loggedOut,
 }
 
@@ -17,6 +19,8 @@ class UserState extends Equatable {
   final UserStatus status;
   final UserEntity? userEntity;
   final UserEntity? viewingUserEntity;
+  final bool resetLoading;
+  final String? resetMessage;
   final String? errorMessage;
 
   const UserState({
@@ -24,6 +28,8 @@ class UserState extends Equatable {
     this.userEntity,
     this.errorMessage,
     this.viewingUserEntity,
+    this.resetLoading = false,
+    this.resetMessage,
   });
 
   UserState copyWith({
@@ -31,12 +37,20 @@ class UserState extends Equatable {
     UserEntity? userEntity,
     UserEntity? viewingUserEntity,
     String? errorMessage,
+    bool? resetLoading,
+    String? resetMessage,
+    bool clearResetMessage = false,
+    bool clearError = false,
   }) {
     return UserState(
       status: status ?? this.status,
       userEntity: userEntity ?? this.userEntity,
       viewingUserEntity: viewingUserEntity ?? this.viewingUserEntity,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      resetLoading: resetLoading ?? this.resetLoading,
+      resetMessage: clearResetMessage
+          ? null
+          : (resetMessage ?? this.resetMessage),
     );
   }
 
@@ -46,5 +60,7 @@ class UserState extends Equatable {
     userEntity,
     viewingUserEntity,
     errorMessage,
+    resetLoading,
+    resetMessage,
   ];
 }

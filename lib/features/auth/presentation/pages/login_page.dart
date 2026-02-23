@@ -1,5 +1,6 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
+import 'package:artsphere/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
@@ -174,12 +175,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  Text(
-                    "Forgot Your Password ?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
+                  TextButton(
+                    onPressed: () {
+                      AppRoutes.push(context, ForgotPasswordPage());
+                    },
+                    child: Text(
+                      "Forgot Your Password ?",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
 
@@ -204,12 +210,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignupScreen(),
-                                  ),
-                                );
+                                AppRoutes.push(context, SignupScreen());
                               },
                           ),
                         ],

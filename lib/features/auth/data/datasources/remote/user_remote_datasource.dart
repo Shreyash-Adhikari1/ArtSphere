@@ -145,4 +145,37 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
     }
     return null;
   }
+
+  @override
+  Future<String> requestPasswordReset(String email) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.requestPasswordReset,
+      data: {"email": email},
+      options: Options(),
+    );
+
+    if (response.data["success"] == true) {
+      return (response.data["message"] ?? "Reset link sent").toString();
+    }
+
+    throw Exception(response.data["message"] ?? "Failed to request reset link");
+  }
+
+  @override
+  Future<bool> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    final res = await _apiClient.post(
+      ApiEndpoints.resetPassword(token),
+      data: {"newPassword": newPassword},
+      options: Options(),
+    );
+
+    if (res.data["success"] == true) {
+      return true;
+    }
+
+    throw Exception(res.data["message"] ?? "Failed to reset password");
+  }
 }

@@ -217,4 +217,60 @@ class UserRepository implements IUserRepository {
       return Left(NetworkFailure(message: "Internet Required To Get Feed"));
     }
   }
+
+  @override
+  Future<Either<Failure, String>> requestPasswordReset(String email) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final msg = await _userRemoteDatasource.requestPasswordReset(email);
+        return Right(msg);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data?["message"]?.toString() ??
+                "Failed to request reset link",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet required to request reset"),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final ok = await _userRemoteDatasource.resetPassword(
+          token: token,
+          newPassword: newPassword,
+        );
+        return Right(ok);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data?["message"]?.toString() ??
+                "Invalid or expired token",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet required to reset password"),
+      );
+    }
+  }
 }

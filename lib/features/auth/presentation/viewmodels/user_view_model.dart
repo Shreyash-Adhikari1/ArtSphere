@@ -4,6 +4,8 @@ import 'package:artsphere/features/auth/domain/usecases/get_users_profile_usecas
 import 'package:artsphere/features/auth/domain/usecases/login_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/register_usecase.dart';
+import 'package:artsphere/features/auth/domain/usecases/request_password_reset_usecase.dart';
+import 'package:artsphere/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,8 @@ class UserViewModel extends Notifier<UserState> {
   late final EditProfileUsecase _editProfileUsecase;
   late final LogoutUsecase _logoutUsecase;
   late final GetUsersProfileUsecase _getUsersProfileUsecase;
+  late final RequestPasswordResetUsecase _requestPasswordResetUsecase;
+  late final ResetPasswordUsecase _resetPasswordUsecase;
 
   @override
   build() {
@@ -28,9 +32,21 @@ class UserViewModel extends Notifier<UserState> {
     _editProfileUsecase = ref.read(editProfileUsecaseProvider);
     _logoutUsecase = ref.read(logoutUsecaseProvider);
     _getUsersProfileUsecase = ref.read(getUsersProfileUsecaseProvider);
+    _requestPasswordResetUsecase = ref.read(
+      requestPasswordResetUsecaseProvider,
+    );
+    _resetPasswordUsecase = ref.read(resetPasswordUsecaseProvider);
 
     Future.microtask(() => getProfile());
     return UserState();
+  }
+
+  void clearError() {
+    state = state.copyWith(clearError: true);
+  }
+
+  void clearResetMessage() {
+    state = state.copyWith(clearResetMessage: true);
   }
 
   // register method
@@ -198,6 +214,81 @@ class UserViewModel extends Notifier<UserState> {
             status: UserStatus.error,
             errorMessage: "edit profile failed",
           );
+        }
+      },
+    );
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    state = state.copyWith(
+      resetLoading: true,
+      status: UserStatus.loading,
+      clearError: true,
+      clearResetMessage: true,
+    );
+
+    final result = await _requestPasswordResetUsecase(
+      RequestPasswordResetParams(email: email),
+    );
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          resetLoading: false,
+          status: UserStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (msg) {
+        state = state.copyWith(
+          resetLoading: false,
+          status: UserStatus.resetLinkSent,
+          resetMessage: msg,
+        );
+        return true;
+      },
+    );
+  }
+
+  Future<bool> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(
+      resetLoading: true,
+      status: UserStatus.loading,
+      clearError: true,
+      clearResetMessage: true,
+    );
+
+    final result = await _resetPasswordUsecase(
+      ResetPasswordParams(token: token, newPassword: newPassword),
+    );
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          resetLoading: false,
+          status: UserStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (ok) {
+        if (ok) {
+          state = state.copyWith(
+            resetLoading: false,
+            status: UserStatus.passwordReset,
+          );
+          return true;
+        } else {
+          state = state.copyWith(
+            resetLoading: false,
+            status: UserStatus.error,
+            errorMessage: "Password reset failed",
+          );
+          return false;
         }
       },
     );

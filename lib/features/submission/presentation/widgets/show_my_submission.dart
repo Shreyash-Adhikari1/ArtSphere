@@ -21,8 +21,6 @@ class _MySubmissionSheet extends ConsumerWidget {
   final String challengeId;
   const _MySubmissionSheet({required this.challengeId});
 
-  static const _pink = Color(0xFFC974A6);
-
   Future<bool> _confirmDelete(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,

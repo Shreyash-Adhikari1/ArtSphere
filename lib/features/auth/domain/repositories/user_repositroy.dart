@@ -16,4 +16,11 @@ abstract interface class IUserRepository {
 
   // Other users profile
   Future<Either<Failure, UserEntity>> getUsersProfile(String userId);
+
+  // reset password
+  Future<Either<Failure, String>> requestPasswordReset(String email);
+  Future<Either<Failure, bool>> resetPassword({
+    required String token,
+    required String newPassword,
+  });
 }

@@ -39,6 +39,8 @@ class ApiEndpoints {
   static String userById(String id) => '/user/$id';
   static const String getProfile = '/user/me';
   static const String editProfile = '/user/me';
+  static const String requestPasswordReset = '/user/request-password-reset';
+  static String resetPassword(String token) => '/user/reset-password/$token';
 
   // ============= Post Endpoints =============
   static const String posts = '/post';

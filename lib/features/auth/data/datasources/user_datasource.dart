@@ -23,4 +23,10 @@ abstract interface class IUserRemoteDatasource {
   Future<UserApiModel?> getMyProfile();
   Future<UserApiModel?> getUsersProfile(String userId);
   Future<EditProfileApiModel> editProfile(EditProfileApiModel model);
+
+  Future<String> requestPasswordReset(String email);
+  Future<bool> resetPassword({
+    required String token,
+    required String newPassword,
+  });
 }
