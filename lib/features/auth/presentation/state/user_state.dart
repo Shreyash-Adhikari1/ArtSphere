@@ -23,6 +23,10 @@ class UserState extends Equatable {
   final String? resetMessage;
   final String? errorMessage;
 
+  final bool biometricAvailable;
+  final bool biometricEnabled;
+  final bool biometricLoading;
+
   const UserState({
     this.status = UserStatus.initial,
     this.userEntity,
@@ -30,6 +34,9 @@ class UserState extends Equatable {
     this.viewingUserEntity,
     this.resetLoading = false,
     this.resetMessage,
+    this.biometricAvailable = false,
+    this.biometricEnabled = false,
+    this.biometricLoading = false,
   });
 
   UserState copyWith({
@@ -41,6 +48,9 @@ class UserState extends Equatable {
     String? resetMessage,
     bool clearResetMessage = false,
     bool clearError = false,
+    bool? biometricAvailable,
+    bool? biometricEnabled,
+    bool? biometricLoading,
   }) {
     return UserState(
       status: status ?? this.status,
@@ -51,6 +61,9 @@ class UserState extends Equatable {
       resetMessage: clearResetMessage
           ? null
           : (resetMessage ?? this.resetMessage),
+      biometricAvailable: biometricAvailable ?? this.biometricAvailable,
+      biometricEnabled: biometricEnabled ?? this.biometricEnabled,
+      biometricLoading: biometricLoading ?? this.biometricLoading,
     );
   }
 
@@ -62,5 +75,8 @@ class UserState extends Equatable {
     errorMessage,
     resetLoading,
     resetMessage,
+    biometricAvailable,
+    biometricEnabled,
+    biometricLoading,
   ];
 }

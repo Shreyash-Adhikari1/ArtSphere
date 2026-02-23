@@ -1,3 +1,6 @@
+import 'package:artsphere/core/services/biometrics/biometric_service.dart';
+import 'package:artsphere/core/services/storage/biometric_pref_service.dart';
+import 'package:artsphere/core/services/storage/token_service.dart';
 import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/get_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/get_users_profile_usecase.dart';
@@ -24,6 +27,10 @@ class UserViewModel extends Notifier<UserState> {
   late final RequestPasswordResetUsecase _requestPasswordResetUsecase;
   late final ResetPasswordUsecase _resetPasswordUsecase;
 
+  late final BiometricService _biometricService;
+  late final BiometricPrefService _biometricPrefService;
+  late final TokenService _tokenService;
+
   @override
   build() {
     _registerUsecase = ref.read(registerUsecaseProvider);
@@ -37,7 +44,14 @@ class UserViewModel extends Notifier<UserState> {
     );
     _resetPasswordUsecase = ref.read(resetPasswordUsecaseProvider);
 
-    Future.microtask(() => getProfile());
+    _biometricService = ref.read(biometricServiceProvider);
+    _biometricPrefService = ref.read(biometricPrefServiceProvider);
+    _tokenService = ref.read(tokenServiceProvider);
+
+    Future.microtask(() async {
+      await _initBiometrics();
+      await getProfile(); // keep your existing behavior
+    });
     return UserState();
   }
 
@@ -290,6 +304,114 @@ class UserViewModel extends Notifier<UserState> {
           );
           return false;
         }
+      },
+    );
+  }
+
+  Future<void> _initBiometrics() async {
+    try {
+      final available = await _biometricService.canCheck();
+      final enabled = _biometricPrefService.isEnabled();
+
+      state = state.copyWith(
+        biometricAvailable: available,
+        biometricEnabled: enabled,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        biometricAvailable: false,
+        biometricEnabled: false,
+      );
+    }
+  }
+
+  Future<void> setBiometricEnabled(bool enabled) async {
+    // If device can't do biometrics, don't allow enabling.
+    if (!state.biometricAvailable && enabled) {
+      state = state.copyWith(
+        status: UserStatus.error,
+        errorMessage: "Biometrics not available on this device",
+      );
+      return;
+    }
+
+    // Optional: require auth when enabling (feels pro)
+    if (enabled) {
+      final ok = await _biometricService.authenticate();
+      if (!ok) {
+        state = state.copyWith(
+          status: UserStatus.error,
+          errorMessage: "Fingerprint verification cancelled",
+        );
+        return;
+      }
+    }
+
+    await _biometricPrefService.setEnabled(enabled);
+    state = state.copyWith(biometricEnabled: enabled);
+  }
+
+  Future<bool> loginWithBiometrics() async {
+    state = state.copyWith(biometricLoading: true, clearError: true);
+
+    if (!state.biometricAvailable) {
+      state = state.copyWith(
+        biometricLoading: false,
+        status: UserStatus.error,
+        errorMessage: "Biometrics not available on this device",
+      );
+      return false;
+    }
+
+    if (!state.biometricEnabled) {
+      state = state.copyWith(
+        biometricLoading: false,
+        status: UserStatus.error,
+        errorMessage: "Enable biometric login in Profile settings first",
+      );
+      return false;
+    }
+
+    final ok = await _biometricService.authenticate();
+    if (!ok) {
+      state = state.copyWith(
+        biometricLoading: false,
+        status: UserStatus.error,
+        errorMessage: "Fingerprint authentication failed",
+      );
+      return false;
+    }
+
+    // Must have token stored from previous login
+    final token = await _tokenService.getToken();
+    if (token == null || token.trim().isEmpty) {
+      state = state.copyWith(
+        biometricLoading: false,
+        status: UserStatus.error,
+        errorMessage: "No saved session. Please login with password once.",
+      );
+      return false;
+    }
+
+    // Use your existing profile call to validate token + fetch user
+    final result = await _getProfileUsecase();
+
+    return result.fold(
+      (failure) {
+        state = state.copyWith(
+          biometricLoading: false,
+          status: UserStatus.error,
+          errorMessage: failure.message,
+        );
+        return false;
+      },
+      (profile) {
+        state = state.copyWith(
+          biometricLoading: false,
+          status: UserStatus.authenticated,
+          userEntity: profile,
+        );
+        return true;
       },
     );
   }
