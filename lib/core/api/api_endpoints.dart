@@ -81,6 +81,15 @@ class ApiEndpoints {
   static const String deleteAllMyChallenges =
       '/challenge/delete/all-my-challenges';
 
+  // ================ Submission Endpoints ================
+  static const String submission = '/submit';
+  static String submitExistingPost(String challengId) =>
+      '/submit/existing/$challengId';
+  static String createNewPostAndSubmit(String challengId) =>
+      '/submit/new/$challengId';
+  static String getSubmissionsForChallenge(String id) => '/submit/get/$id';
+  static String deleteSubmission(String id) => '/submit/delete/$id';
+
   // ============ Batch Endpoints ============
   static const String batches = '/batches';
   static String batchById(String id) => '/batches/$id';
