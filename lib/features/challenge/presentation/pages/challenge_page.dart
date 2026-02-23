@@ -109,6 +109,7 @@ class _DiscoverChallengesTab extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async => vm.loadDiscoverChallenges(),
       child: ChallengeListSection(
+        showSubmitButton: true,
         challenges: state.discoverChallenges,
         emptyText: "No challenges yet.",
         showOwnerControls: false,
@@ -151,6 +152,7 @@ class _MyChallengesTab extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async => vm.loadMyChallenges(),
       child: ChallengeListSection(
+        showSubmitButton: false,
         challenges: state.myChallenges,
         emptyText: "You haven't created any challenges yet.",
         showOwnerControls: true, // show edit/delete

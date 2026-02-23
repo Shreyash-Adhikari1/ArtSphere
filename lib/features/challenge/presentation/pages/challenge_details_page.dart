@@ -149,8 +149,6 @@ class _ChallengeDetailsPageState extends ConsumerState<ChallengeDetailsPage> {
                     ),
 
                   const SizedBox(height: 16),
-
-                  // Submit button placeholder
                   ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -184,7 +182,6 @@ class _ChallengeDetailsPageState extends ConsumerState<ChallengeDetailsPage> {
                   ),
                   const SizedBox(height: 8),
 
-                  // ✅ ready to plug in later with real submission posts
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -201,8 +198,6 @@ class _ChallengeDetailsPageState extends ConsumerState<ChallengeDetailsPage> {
                   ),
 
                   const SizedBox(height: 12),
-
-                  // Placeholder grid (no crash, already styled)
                   ProfilePostGrid(
                     posts: const [],
                     loading: false,

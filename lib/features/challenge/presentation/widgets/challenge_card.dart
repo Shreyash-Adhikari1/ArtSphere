@@ -8,6 +8,8 @@ import 'package:artsphere/features/challenge/presentation/viewmodels/challenge_v
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum _OwnerAction { edit, delete }
+
 class ChallengeCard extends ConsumerStatefulWidget {
   final ChallengeEntity challenge;
   final bool showSubmitButton;
@@ -31,7 +33,7 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
   @override
   void initState() {
     super.initState();
-    // tick countdown every second (lightweight for a few cards)
+    // tick countdown every second (ok for a few cards; if list becomes huge we’ll optimize)
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -50,12 +52,7 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
     if (media.startsWith('/uploads/')) return '${ApiEndpoints.baseUrl}$media';
 
     final fileName = media.split('/').last;
-
-    // ✅ If you have a dedicated endpoint, use it
-    // If not, adjust to your backend route.
-    // Common: ApiEndpoints.challengeImages
-    final base = ApiEndpoints.challengeImages;
-    return '$base/$fileName';
+    return '${ApiEndpoints.challengeImages}/$fileName';
   }
 
   String _countdownText(DateTime? endsAt) {
@@ -85,21 +82,29 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
     AppRoutes.push(context, ChallengeDetailsPage(challengeId: id));
   }
 
-  Future<void> _confirmDelete() async {
+  void _edit() {
+    AppRoutes.push(context, EditChallengePage(initial: widget.challenge));
+  }
+
+  Future<void> _confirmDelete({required bool busy}) async {
     final id = widget.challenge.challengeId;
     if (id == null) return;
+    if (busy) return;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Delete challenge"),
-        content: const Text("Are you sure you want to delete this challenge?"),
+        content: const Text(
+          "Are you sure you want to delete this challenge? This can’t be undone.",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Delete"),
           ),
@@ -111,10 +116,9 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
 
     final vm = ref.read(challengeViewModelProvider.notifier);
     await vm.deleteChallenge(id);
-  }
 
-  void _edit() {
-    AppRoutes.push(context, EditChallengePage(initial: widget.challenge));
+    // Optional UX: show snack on success if you store last action result
+    // For now, your VM should refresh lists, so just return.
   }
 
   @override
@@ -125,13 +129,19 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
 
     final state = ref.watch(challengeViewModelProvider);
     final id = c.challengeId ?? "";
+
+    // per-challenge busy lock (good!)
     final busy = id.isNotEmpty && (state.busyById[id] == true);
+
+    // Owner menu should be disabled if busy
+    final showMenu = widget.showOwnerControls;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF6ED),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withOpacity(0.04)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,13 +152,43 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
               borderRadius: BorderRadius.circular(14),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.network(
-                  cover,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.grey.shade200,
-                    child: const Center(child: Icon(Icons.image, size: 40)),
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      cover,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(child: Icon(Icons.image, size: 40)),
+                      ),
+                    ),
+
+                    // subtle overlay for ended challenges
+                    if (!_isOpen)
+                      Container(
+                        color: Colors.black.withOpacity(0.18),
+                        alignment: Alignment.topRight,
+                        padding: const EdgeInsets.all(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            "Closed",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             )
@@ -165,6 +205,7 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
           const SizedBox(height: 12),
 
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
@@ -175,15 +216,52 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
                   ),
                 ),
               ),
-              if (widget.showOwnerControls)
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == "edit") _edit();
-                    if (v == "delete") _confirmDelete();
+
+              if (showMenu)
+                PopupMenuButton<_OwnerAction>(
+                  enabled: !busy,
+                  tooltip: "Challenge actions",
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  icon: busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.more_horiz),
+                  onSelected: (action) async {
+                    if (action == _OwnerAction.edit) {
+                      _edit();
+                      return;
+                    }
+                    if (action == _OwnerAction.delete) {
+                      await _confirmDelete(busy: busy);
+                      return;
+                    }
                   },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: "edit", child: Text("Edit")),
-                    PopupMenuItem(value: "delete", child: Text("Delete")),
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: _OwnerAction.edit,
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18),
+                          SizedBox(width: 10),
+                          Text("Edit"),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _OwnerAction.delete,
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 10),
+                          Text("Delete", style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
             ],
@@ -247,7 +325,6 @@ class _ChallengeCardState extends ConsumerState<ChallengeCard> {
                     onPressed: busy
                         ? null
                         : () {
-                            // Placeholder until submissions feature is ready
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("Submit flow coming soon 👀"),

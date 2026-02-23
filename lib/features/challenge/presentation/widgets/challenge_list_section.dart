@@ -5,13 +5,20 @@ import 'package:flutter/material.dart';
 class ChallengeListSection extends StatelessWidget {
   final List<ChallengeEntity> challenges;
   final String emptyText;
+
+  /// Shows edit/delete menu on the card (for My Challenges tab)
   final bool showOwnerControls;
+
+  /// Whether we should show submit button (Discover tab)
+  /// For closed challenges we force false anyway.
+  final bool showSubmitButton;
 
   const ChallengeListSection({
     super.key,
     required this.challenges,
     required this.emptyText,
     required this.showOwnerControls,
+    required this.showSubmitButton,
   });
 
   bool _isOpen(ChallengeEntity c) {
@@ -22,8 +29,44 @@ class ChallengeListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (challenges.isEmpty) {
+      // Important: keep it scrollable so RefreshIndicator can pull
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          const SizedBox(height: 120),
+          Center(
+            child: Text(
+              emptyText,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     final open = challenges.where(_isOpen).toList();
     final closed = challenges.where((c) => !_isOpen(c)).toList();
+
+    Widget buildCard(ChallengeEntity c, {required bool isOpen}) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: ChallengeCard(
+              challenge: c,
+              showOwnerControls: showOwnerControls,
+              showSubmitButton: isOpen ? showSubmitButton : false,
+            ),
+          ),
+        ),
+      );
+    }
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -35,49 +78,25 @@ class ChallengeListSection extends StatelessWidget {
           count: open.length,
         ),
         const SizedBox(height: 10),
+
         if (open.isEmpty)
-          _EmptyBox(text: "Nothing here yet.")
+          const _EmptyBox(text: "Nothing here yet.")
         else
-          ...open.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: ChallengeCard(
-                    challenge: c,
-                    showOwnerControls: showOwnerControls,
-                    showSubmitButton: true,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          ...open.map((c) => buildCard(c, isOpen: true)),
+
         const SizedBox(height: 14),
+
         _SectionHeader(
           title: "Closed challenges",
           subtitle: "Explore completed prompts.",
           count: closed.length,
         ),
         const SizedBox(height: 10),
+
         if (closed.isEmpty)
-          _EmptyBox(text: "Nothing here yet.")
+          const _EmptyBox(text: "Nothing here yet.")
         else
-          ...closed.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: ChallengeCard(
-                    challenge: c,
-                    showOwnerControls: showOwnerControls,
-                    showSubmitButton: false, // closed
-                  ),
-                ),
-              ),
-            ),
-          ),
+          ...closed.map((c) => buildCard(c, isOpen: false)),
       ],
     );
   }
