@@ -1,28 +1,25 @@
-import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:artsphere/core/services/storage/secure_storage_service.dart';
 
 final tokenServiceProvider = Provider<TokenService>((ref) {
-  return TokenService(prefs: ref.read(sharedPreferencesProvider));
+  return TokenService(storage: ref.read(secureStorageProvider));
 });
 
 class TokenService {
-  final SharedPreferences _prefs;
-  TokenService({required SharedPreferences prefs}) : _prefs = prefs;
+  final dynamic _storage; // FlutterSecureStorage
+  TokenService({required dynamic storage}) : _storage = storage;
+
   static const String _tokenKey = 'auth_token';
 
-  // Save token: secure storage
   Future<void> saveToken(String token) async {
-    await _prefs.setString(_tokenKey, token);
+    await _storage.write(key: _tokenKey, value: token);
   }
 
-  // get token
-  String? getToken() {
-    return _prefs.getString(_tokenKey);
+  Future<String?> getToken() async {
+    return _storage.read(key: _tokenKey);
   }
 
-  // remove token
   Future<void> removeToken() async {
-    await _prefs.remove(_tokenKey);
+    await _storage.delete(key: _tokenKey);
   }
 }
