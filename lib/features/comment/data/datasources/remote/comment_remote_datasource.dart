@@ -33,7 +33,7 @@ class CommentRemoteDatasource implements ICommentRemoteDatasource {
     String postId,
     CreateCommentApiModel comment,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
 
     final response = await _apiClient.post(
       ApiEndpoints.createComment(postId),
@@ -54,7 +54,7 @@ class CommentRemoteDatasource implements ICommentRemoteDatasource {
 
   @override
   Future<List<CommentApiModel>> getCommentsForPost(String postId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getCommentsForPost(postId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -87,7 +87,7 @@ class CommentRemoteDatasource implements ICommentRemoteDatasource {
 
   @override
   Future<bool> likeComment(String commentId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.likeComment(commentId),
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -100,7 +100,7 @@ class CommentRemoteDatasource implements ICommentRemoteDatasource {
 
   @override
   Future<bool> unlikeComment(String commentId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.unlikeComment(commentId),
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -113,7 +113,7 @@ class CommentRemoteDatasource implements ICommentRemoteDatasource {
 
   @override
   Future<bool> deleteComment(String commentId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.delete(
       ApiEndpoints.deleteComment(commentId),
       options: Options(headers: {'Authorization': "Bearer $token"}),

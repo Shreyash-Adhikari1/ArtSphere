@@ -31,7 +31,7 @@ class SubmissionRemoteDatasource implements ISubmissionRemoteDatasource {
     String challengeId,
     String postId,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.submitExistingPost(challengeId),
       data: {"postId": postId},
@@ -70,7 +70,7 @@ class SubmissionRemoteDatasource implements ISubmissionRemoteDatasource {
       "visibility": post.visibility ?? "public",
       "tags": post.tags ?? [],
     });
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.createNewPostAndSubmit(challengeId),
       data: formData,
@@ -93,7 +93,7 @@ class SubmissionRemoteDatasource implements ISubmissionRemoteDatasource {
   Future<List<SubmissionApiModel>> getSubmissionsForChallenge(
     String challengeId,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getSubmissionsForChallenge(challengeId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -115,7 +115,7 @@ class SubmissionRemoteDatasource implements ISubmissionRemoteDatasource {
 
   @override
   Future<bool> deleteSubmission(String submissionId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.delete(
       ApiEndpoints.deleteSubmission(submissionId),
       options: Options(headers: {'Authorization': "Bearer $token"}),

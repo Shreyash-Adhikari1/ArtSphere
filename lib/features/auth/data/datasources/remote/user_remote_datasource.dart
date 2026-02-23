@@ -33,7 +33,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
 
   @override
   Future<UserApiModel?> getMyProfile() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getProfile,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -110,7 +110,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
         ),
     });
     // get token to move further
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.patch(
       ApiEndpoints.editProfile,
       data: formData,
@@ -133,7 +133,7 @@ class UserRemoteDatasource implements IUserRemoteDatasource {
 
   @override
   Future<UserApiModel?> getUsersProfile(String userId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.userById(userId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),

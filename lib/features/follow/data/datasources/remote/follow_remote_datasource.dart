@@ -23,7 +23,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
        _tokenService = tokenService;
   @override
   Future<FollowApiModel> followUser(String targetUserId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
 
     final response = await _apiClient.post(
       ApiEndpoints.followUser(targetUserId),
@@ -38,7 +38,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<FollowApiModel> unfollowUser(String targetUserId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.unfollowUser(targetUserId),
       options: Options(headers: {"Authorization": "Bearer $token"}),
@@ -52,7 +52,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<List<FollowApiModel>> getMyFollowers() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getMyFollowers,
       options: Options(headers: {"Authorization": "Bearer $token"}),
@@ -71,7 +71,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<List<FollowApiModel>> getMyFollowing() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getMyFollowing,
       options: Options(headers: {"Authorization": "Bearer $token"}),
@@ -90,7 +90,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<List<FollowApiModel>> getUsersFollowers(String userId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getUsersFollowers(userId),
       options: Options(headers: {"Authorization": "Bearer $token"}),
@@ -111,7 +111,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<List<FollowApiModel>> getUsersFollowing(String userId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getUsersFollowing(userId),
       options: Options(headers: {"Authorization": "Bearer $token"}),
@@ -132,7 +132,7 @@ class FollowRemoteDatasource implements IFollowRemoteDatasource {
 
   @override
   Future<bool> getIsFollowingStatus(String targetUserId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
 
     final response = await _apiClient.get(
       ApiEndpoints.getIsFollowingStatus(targetUserId),

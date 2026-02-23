@@ -33,7 +33,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
     CreateChallengeApiModel challenge,
     String challengeMediaPath,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final file = File(challengeMediaPath);
 
     if (!await file.exists()) {
@@ -73,7 +73,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
     String challengeId,
     EditChallengeApiModel challenge,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.patch(
       ApiEndpoints.editChallenge(challengeId),
       data: challenge.toJson(),
@@ -90,7 +90,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
 
   @override
   Future<List<ChallengeApiModel>> getAllChallenges() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getAllChallenges,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -110,7 +110,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
 
   @override
   Future<ChallengeApiModel> getChallengeById(String challengeId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getChallengeById(challengeId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -125,7 +125,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
 
   @override
   Future<List<ChallengeApiModel>> getMyChallenges() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getMyChallenges,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -147,7 +147,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
 
   @override
   Future<bool> deleteChallenge(String challengeId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.delete(
       ApiEndpoints.deleteChallenge(challengeId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -160,7 +160,7 @@ class ChallengeRemoteDatasource implements IChallengeRemoteDatasource {
 
   @override
   Future<bool> deleteAllMyChallenges() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.delete(
       ApiEndpoints.deleteAllMyChallenges,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
