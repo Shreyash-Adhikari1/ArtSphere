@@ -8,7 +8,7 @@ abstract interface class IUserRepository {
   Future<Either<Failure, bool>> registerUser(UserEntity entity);
   Future<Either<Failure, UserEntity>> loginUser(String email, String password);
   Future<Either<Failure, UserEntity>> getCurrentUser();
-  Future<Either<Failure, bool>> logout();
+  Future<Either<Failure, bool>> logout({bool preserveToken = false});
 
   // Own Profile
   Future<Either<Failure, UserEntity>> getMyProfile();

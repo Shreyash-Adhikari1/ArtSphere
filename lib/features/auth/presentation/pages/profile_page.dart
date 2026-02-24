@@ -1,5 +1,6 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/api/api_endpoints.dart';
+import 'package:artsphere/core/themes/theme_notifier.dart';
 import 'package:artsphere/features/auth/presentation/pages/edit_profile_page.dart';
 import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
@@ -31,27 +32,39 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _confirmLogout() async {
-    final ok = await showDialog<bool>(
+    final choice = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Logout"),
-        content: const Text("Do you want to log out?"),
+        content: const Text("Choose how you want to logout."),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(ctx, 0),
             child: const Text("Cancel"),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 1),
+            child: const Text("Lock app (Fingerprint)"),
+          ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Logout"),
+            onPressed: () => Navigator.pop(ctx, 2),
+            child: const Text("Sign out"),
           ),
         ],
       ),
     );
 
-    if (ok != true) return;
+    if (choice == null || choice == 0) return;
 
-    await ref.read(userViewModelProvider.notifier).logout();
+    if (choice == 1) {
+      await ref
+          .read(userViewModelProvider.notifier)
+          .logout(preserveToken: true);
+    } else if (choice == 2) {
+      await ref
+          .read(userViewModelProvider.notifier)
+          .logout(preserveToken: false);
+    }
 
     if (!mounted) return;
     AppRoutes.pushAndRemoveUntil(context, LoginScreen());
@@ -60,6 +73,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
+    final userVm = ref.read(userViewModelProvider.notifier);
+
+    final themeMode = ref.watch(themeModeProvider);
+    final themeVm = ref.read(themeModeProvider.notifier);
+
+    final isDark = themeMode == ThemeMode.dark;
+
+    final bioAvailable = userState.biometricAvailable == true;
+    final bioEnabled = userState.biometricEnabled == true;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -81,9 +103,41 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 AppRoutes.push(context, const EditProfilePage());
               } else if (action == _ProfileMenuAction.logout) {
                 await _confirmLogout();
+              } else if (action == _ProfileMenuAction.toggleDarkMode) {
+                await themeVm.toggleDarkMode(!isDark);
+              } else if (action == _ProfileMenuAction.toggleBiometric) {
+                if (!bioAvailable) return;
+                await userVm.setBiometricEnabled(!bioEnabled);
               }
             },
             itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _ProfileMenuAction.toggleDarkMode,
+                child: Row(
+                  children: [
+                    Icon(isDark ? Icons.dark_mode : Icons.light_mode, size: 18),
+                    const SizedBox(width: 10),
+                    Text(isDark ? "Dark mode: ON" : "Dark mode: OFF"),
+                  ],
+                ),
+              ),
+
+              if (bioAvailable)
+                PopupMenuItem(
+                  value: _ProfileMenuAction.toggleBiometric,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.fingerprint, size: 18),
+                      const SizedBox(width: 10),
+                      Text(
+                        bioEnabled
+                            ? "Fingerprint login: ON"
+                            : "Fingerprint login: OFF",
+                      ),
+                    ],
+                  ),
+                ),
+
               const PopupMenuItem(
                 value: _ProfileMenuAction.editProfile,
                 child: Row(
@@ -138,7 +192,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 }
 
-enum _ProfileMenuAction { editProfile, logout }
+enum _ProfileMenuAction { toggleDarkMode, toggleBiometric, editProfile, logout }
 
 class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader();
@@ -168,16 +222,14 @@ class _ProfileHeader extends ConsumerWidget {
     final myUserId = user.userId;
 
     Future<void> openFollowers() async {
-      // Ensure we have latest "my followers" list before opening (optional)
       await followVm.loadMyFollowers();
 
       await showFollowListModal(
         context: context,
         mode: FollowListMode.followers,
-        userId: null, // my list
+        userId: null,
       );
 
-      // Refresh counts after modal closes
       await userVm.getProfile();
     }
 
@@ -187,7 +239,7 @@ class _ProfileHeader extends ConsumerWidget {
       await showFollowListModal(
         context: context,
         mode: FollowListMode.following,
-        userId: null, // my list
+        userId: null,
       );
 
       await userVm.getProfile();
@@ -244,8 +296,6 @@ class _ProfileHeader extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _ProfileStat(title: "Posts", value: posts.toString()),
-
-                    // ✅ clickable Followers -> modal (Follow back)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: myUserId == null ? null : openFollowers,
@@ -254,8 +304,6 @@ class _ProfileHeader extends ConsumerWidget {
                         value: followers.toString(),
                       ),
                     ),
-
-                    // ✅ clickable Following -> modal (Unfollow)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: myUserId == null ? null : openFollowing,
@@ -390,7 +438,7 @@ class _TabIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: active ? Colors.black : Colors.grey.shade500),
+        Icon(icon, color: active ? Colors.black : Colors.grey),
         const SizedBox(height: 8),
         Container(
           height: 2,

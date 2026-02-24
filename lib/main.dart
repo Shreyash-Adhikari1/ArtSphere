@@ -10,12 +10,15 @@ void main() async {
 
   await HiveService().init();
 
-  // Shared Preferences object : because shared prefs is async and provider is sync 
+  // Shared Preferences object : because shared prefs is async and provider is sync
 
   // Shared Prefs object
-  final sharedPrefs= await SharedPreferences.getInstance();
+  final sharedPrefs = await SharedPreferences.getInstance();
 
-  runApp(ProviderScope(
-    overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
-    child: MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
+      child: MyApp(),
+    ),
+  );
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -16,12 +17,21 @@ class BiometricService {
   }
 
   Future<bool> authenticate() async {
+    debugPrint("BIO: authenticate() called");
     try {
-      return await _auth.authenticate(
+      final ok = await _auth.authenticate(
         localizedReason: "Unlock Artsphere with fingerprint",
         biometricOnly: true,
+        // replacement for the old "stickyAuth" behavior:
+        persistAcrossBackgrounding: true,
       );
-    } on LocalAuthException {
+      debugPrint("BIO: authenticate() result=$ok");
+      return ok;
+    } on LocalAuthException catch (e) {
+      debugPrint("BIO: LocalAuthException code=${e.code}");
+      return false;
+    } catch (e) {
+      debugPrint("BIO: unknown error: $e");
       return false;
     }
   }

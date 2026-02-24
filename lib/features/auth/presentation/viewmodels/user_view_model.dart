@@ -10,6 +10,7 @@ import 'package:artsphere/features/auth/domain/usecases/register_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/request_password_reset_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:artsphere/features/auth/presentation/state/user_state.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // user view model provider
@@ -126,10 +127,12 @@ class UserViewModel extends Notifier<UserState> {
     );
   }
 
-  Future<void> logout() async {
+  Future<void> logout({bool preserveToken = false}) async {
     state = state.copyWith(status: UserStatus.loading);
 
-    final result = await _logoutUsecase();
+    final result = await _logoutUsecase(
+      LogoutParams(preserveToken: preserveToken),
+    );
 
     result.fold(
       (failure) {
@@ -140,7 +143,6 @@ class UserViewModel extends Notifier<UserState> {
       },
       (ok) {
         if (ok) {
-          // clear state in memory too
           state = state.copyWith(
             status: UserStatus.loggedOut,
             userEntity: null,
@@ -312,7 +314,7 @@ class UserViewModel extends Notifier<UserState> {
     try {
       final available = await _biometricService.canCheck();
       final enabled = _biometricPrefService.isEnabled();
-
+      debugPrint("BIO AVAILABLE: $available");
       state = state.copyWith(
         biometricAvailable: available,
         biometricEnabled: enabled,
@@ -326,6 +328,7 @@ class UserViewModel extends Notifier<UserState> {
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {
+    debugPrint("BIO: setBiometricEnabled($enabled) start");
     // If device can't do biometrics, don't allow enabling.
     if (!state.biometricAvailable && enabled) {
       state = state.copyWith(
@@ -348,7 +351,9 @@ class UserViewModel extends Notifier<UserState> {
     }
 
     await _biometricPrefService.setEnabled(enabled);
+    debugPrint("BIO: pref saved, enabled=$enabled");
     state = state.copyWith(biometricEnabled: enabled);
+    debugPrint("BIO: state updated, enabled=${state.biometricEnabled}");
   }
 
   Future<bool> loginWithBiometrics() async {
