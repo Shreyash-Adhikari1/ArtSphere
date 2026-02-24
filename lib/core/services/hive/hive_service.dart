@@ -1,5 +1,6 @@
 import 'package:artsphere/core/constants/hive_table_constant.dart';
 import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
+import 'package:artsphere/features/challenge/data/models/hive/challenge_hive_model.dart';
 import 'package:artsphere/features/post/data/models/hive/post_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
@@ -29,12 +30,16 @@ class HiveService {
     if (!Hive.isAdapterRegistered(HiveTableConstant.postTypeId)) {
       Hive.registerAdapter(PostHiveModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(HiveTableConstant.challengeTypeId)) {
+      Hive.registerAdapter(ChallengeHiveModelAdapter());
+    }
   }
 
   // Open Boxes
   Future<void> openBoxes() async {
     await Hive.openBox<UserHiveModel>(HiveTableConstant.userTable);
     await Hive.openBox<PostHiveModel>(HiveTableConstant.postTable);
+    await Hive.openBox<ChallengeHiveModel>(HiveTableConstant.challengeTable);
     await Hive.openBox(HiveTableConstant.metaTable);
   }
 
@@ -48,6 +53,8 @@ class HiveService {
   // Makina a box for user things.
   Box<UserHiveModel> get _userBox => Hive.box(HiveTableConstant.userTable);
   Box<PostHiveModel> get _postBox => Hive.box(HiveTableConstant.postTable);
+  Box<ChallengeHiveModel> get _challengeBox =>
+      Hive.box(HiveTableConstant.challengeTable);
   Box get _metaBox => Hive.box(HiveTableConstant.metaTable);
 
   // register user
@@ -185,5 +192,75 @@ class HiveService {
     await _metaBox.delete(HiveTableConstant.keyDiscoverPostIds);
     await _metaBox.delete(HiveTableConstant.keyMyPostIds);
     await _metaBox.delete(HiveTableConstant.keyFollowingPostIds);
+  }
+
+  // ===================== CHALLENGES CACHE =====================
+
+  Future<void> cacheDiscoverChallenges(
+    List<ChallengeHiveModel> challenges, {
+    int limit = 10,
+  }) async {
+    final trimmed = challenges.take(limit).toList();
+
+    for (final c in trimmed) {
+      if (c.challengeId.trim().isEmpty) continue;
+      await _challengeBox.put(c.challengeId, c);
+    }
+
+    final ids = trimmed
+        .map((e) => e.challengeId)
+        .where((id) => id.trim().isNotEmpty)
+        .toList();
+
+    await _metaBox.put(HiveTableConstant.keyDiscoverChallengeIds, ids);
+  }
+
+  List<ChallengeHiveModel> getCachedDiscoverChallenges() {
+    final ids =
+        (_metaBox.get(HiveTableConstant.keyDiscoverChallengeIds) as List?)
+            ?.cast<String>() ??
+        [];
+
+    return ids
+        .map((id) => _challengeBox.get(id))
+        .whereType<ChallengeHiveModel>()
+        .toList();
+  }
+
+  // Cache "my challenges" (optional)
+  Future<void> cacheMyChallenges(
+    List<ChallengeHiveModel> challenges, {
+    int limit = 10,
+  }) async {
+    final trimmed = challenges.take(limit).toList();
+
+    for (final c in trimmed) {
+      if (c.challengeId.trim().isEmpty) continue;
+      await _challengeBox.put(c.challengeId, c);
+    }
+
+    final ids = trimmed
+        .map((e) => e.challengeId)
+        .where((id) => id.trim().isNotEmpty)
+        .toList();
+
+    await _metaBox.put(HiveTableConstant.keyMyChallengeIds, ids);
+  }
+
+  List<ChallengeHiveModel> getCachedMyChallenges() {
+    final ids =
+        (_metaBox.get(HiveTableConstant.keyMyChallengeIds) as List?)
+            ?.cast<String>() ??
+        [];
+
+    return ids
+        .map((id) => _challengeBox.get(id))
+        .whereType<ChallengeHiveModel>()
+        .toList();
+  }
+
+  // Details cache (store single challenge by id — already covered by _challengeBox.put)
+  ChallengeHiveModel? getCachedChallengeDetails(String challengeId) {
+    return _challengeBox.get(challengeId);
   }
 }
