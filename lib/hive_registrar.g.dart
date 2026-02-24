@@ -4,15 +4,18 @@
 
 import 'package:hive_ce/hive_ce.dart';
 import 'package:artsphere/features/auth/data/models/hive/user_hive_model.dart';
+import 'package:artsphere/features/post/data/models/hive/post_hive_model.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(PostHiveModelAdapter());
     registerAdapter(UserHiveModelAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(PostHiveModelAdapter());
     registerAdapter(UserHiveModelAdapter());
   }
 }
