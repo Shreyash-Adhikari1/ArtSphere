@@ -12,5 +12,6 @@ class HiveTableConstant {
   static const String metaTable = "meta_table";
 
   static const String keyDiscoverPostIds = "discover_post_ids";
+  static const String keyFollowingPostIds = "following_post_ids";
   static const String keyMyPostIds = "my_post_ids";
 }

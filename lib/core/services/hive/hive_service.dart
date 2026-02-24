@@ -25,6 +25,8 @@ class HiveService {
   void _registerAdapter() {
     if (!Hive.isAdapterRegistered(HiveTableConstant.userTypeId)) {
       Hive.registerAdapter(UserHiveModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(HiveTableConstant.postTypeId)) {
       Hive.registerAdapter(PostHiveModelAdapter());
     }
   }
@@ -138,6 +140,35 @@ class HiveService {
         .toList();
   }
 
+  Future<void> cacheFollowingPosts(
+    List<PostHiveModel> posts, {
+    int limit = 5,
+  }) async {
+    final trimmed = posts.take(limit).toList();
+
+    for (final p in trimmed) {
+      if (p.postId.trim().isEmpty) continue;
+      await _postBox.put(p.postId, p);
+    }
+
+    final ids = trimmed
+        .map((e) => e.postId)
+        .where((id) => id.trim().isNotEmpty)
+        .toList();
+    await _metaBox.put(HiveTableConstant.keyFollowingPostIds, ids);
+  }
+
+  List<PostHiveModel> getCachedFollowingPosts() {
+    final ids =
+        (_metaBox.get(HiveTableConstant.keyFollowingPostIds) as List?)
+            ?.cast<String>() ??
+        [];
+    return ids
+        .map((id) => _postBox.get(id))
+        .whereType<PostHiveModel>()
+        .toList();
+  }
+
   List<PostHiveModel> getCachedMyPosts() {
     final ids =
         (_metaBox.get(HiveTableConstant.keyMyPostIds) as List?)
@@ -153,5 +184,6 @@ class HiveService {
     await _postBox.clear();
     await _metaBox.delete(HiveTableConstant.keyDiscoverPostIds);
     await _metaBox.delete(HiveTableConstant.keyMyPostIds);
+    await _metaBox.delete(HiveTableConstant.keyFollowingPostIds);
   }
 }

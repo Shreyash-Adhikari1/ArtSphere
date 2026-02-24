@@ -99,7 +99,7 @@ class PostHiveModel extends HiveObject {
   // Entity -> Hive
   factory PostHiveModel.fromEntity(PostEntity post) {
     return PostHiveModel(
-      postId: post.postId ?? "", // you should NOT cache posts without id
+      postId: post.postId ?? "", 
       authorId: post.author?.userId,
       authorUsername: post.author?.username,
       authorAvatar: post.author?.avatar,
