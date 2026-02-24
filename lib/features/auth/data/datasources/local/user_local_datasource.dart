@@ -68,10 +68,15 @@ class UserLocalDatasource implements IUserLocalDatasource {
   }
 
   @override
-  Future<bool> logout() async {
+  Future<bool> logout({bool preserveToken = false}) async {
     try {
       await _hiveService.logout();
-      await _tokenService.removeToken();
+
+      //keep token for fingerprint login if preserveToken = true
+      if (!preserveToken) {
+        await _tokenService.removeToken();
+      }
+
       await _userSessionService.clearSession();
       return true;
     } catch (_) {

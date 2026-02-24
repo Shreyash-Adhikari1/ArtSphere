@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _tabs = const [
     DiscoverTabShell(),
     AddPostPage(),
-    ChallengePage(),
+    ChallengesScreen(),
     ProfilePage(),
   ];
 

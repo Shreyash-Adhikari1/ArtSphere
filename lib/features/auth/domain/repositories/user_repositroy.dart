@@ -8,7 +8,7 @@ abstract interface class IUserRepository {
   Future<Either<Failure, bool>> registerUser(UserEntity entity);
   Future<Either<Failure, UserEntity>> loginUser(String email, String password);
   Future<Either<Failure, UserEntity>> getCurrentUser();
-  Future<Either<Failure, bool>> logout();
+  Future<Either<Failure, bool>> logout({bool preserveToken = false});
 
   // Own Profile
   Future<Either<Failure, UserEntity>> getMyProfile();
@@ -16,4 +16,11 @@ abstract interface class IUserRepository {
 
   // Other users profile
   Future<Either<Failure, UserEntity>> getUsersProfile(String userId);
+
+  // reset password
+  Future<Either<Failure, String>> requestPasswordReset(String email);
+  Future<Either<Failure, bool>> resetPassword({
+    required String token,
+    required String newPassword,
+  });
 }

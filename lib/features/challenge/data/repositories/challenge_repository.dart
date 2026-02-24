@@ -207,7 +207,7 @@ class ChallengeRepository implements IChallengeRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> deleteChalllenge(String challengeId) async {
+  Future<Either<Failure, bool>> deleteChallenge(String challengeId) async {
     if (await _networkInfo.isConnected) {
       try {
         await _challengeRemoteDatasource.deleteChallenge(challengeId);

@@ -39,6 +39,8 @@ class ApiEndpoints {
   static String userById(String id) => '/user/$id';
   static const String getProfile = '/user/me';
   static const String editProfile = '/user/me';
+  static const String requestPasswordReset = '/user/request-password-reset';
+  static String resetPassword(String token) => '/user/reset-password/$token';
 
   // ============= Post Endpoints =============
   static const String posts = '/post';
@@ -80,6 +82,15 @@ class ApiEndpoints {
   static String deleteChallenge(String id) => '/challenge/delete/$id';
   static const String deleteAllMyChallenges =
       '/challenge/delete/all-my-challenges';
+
+  // ================ Submission Endpoints ================
+  static const String submission = '/submit';
+  static String submitExistingPost(String challengId) =>
+      '/submit/existing/$challengId';
+  static String createNewPostAndSubmit(String challengId) =>
+      '/submit/new/$challengId';
+  static String getSubmissionsForChallenge(String id) => '/submit/get/$id';
+  static String deleteSubmission(String id) => '/submit/delete/$id';
 
   // ============ Batch Endpoints ============
   static const String batches = '/batches';

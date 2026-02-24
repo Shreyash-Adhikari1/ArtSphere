@@ -6,7 +6,7 @@ abstract interface class IUserLocalDatasource {
   Future<UserHiveModel> registerUser(UserHiveModel model);
   Future<UserHiveModel?> loginUser(String email, String password);
   Future<UserHiveModel?> getCurrentUser();
-  Future<bool> logout();
+  Future<bool> logout({bool preserveToken = false});
 
   // Extra Methods: Doesnt Have to be in DOMAIN LAYER repository
 
@@ -23,4 +23,10 @@ abstract interface class IUserRemoteDatasource {
   Future<UserApiModel?> getMyProfile();
   Future<UserApiModel?> getUsersProfile(String userId);
   Future<EditProfileApiModel> editProfile(EditProfileApiModel model);
+
+  Future<String> requestPasswordReset(String email);
+  Future<bool> resetPassword({
+    required String token,
+    required String newPassword,
+  });
 }

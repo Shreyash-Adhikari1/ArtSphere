@@ -1,10 +1,10 @@
 import 'package:artsphere/app/routes/app_routes.dart';
 import 'package:artsphere/core/utils/snackbar_utils.dart';
-import 'package:artsphere/features/auth/presentation/state/user_state.dart';
-import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
+import 'package:artsphere/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
 import 'package:artsphere/features/auth/presentation/pages/signup_page.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:artsphere/features/auth/presentation/state/user_state.dart';
+import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,9 +27,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(userViewModelProvider.notifier)
           .login(
-            email: _emailController.text,
+            email: _emailController.text.trim(),
             password: _passwordController.text,
           );
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final ok = await ref
+        .read(userViewModelProvider.notifier)
+        .loginWithBiometrics();
+    if (!mounted) return;
+
+    if (ok) {
+      // Keep navigation consistent with your existing listener behavior.
+      AppRoutes.pushAndRemoveUntil(context, HomeScreen());
+      SnackbarUtils.showSuccess(context, "Fingerprint Login SuccessFull");
+    } else {
+      final msg =
+          ref.read(userViewModelProvider).errorMessage ??
+          "Fingerprint login failed";
+      SnackbarUtils.showError(context, msg);
     }
   }
 
@@ -42,6 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep your existing listener logic intact
     ref.listen<UserState>(userViewModelProvider, (previous, next) {
       if (next.status == UserStatus.authenticated) {
         AppRoutes.pushAndRemoveUntil(context, HomeScreen());
@@ -50,176 +69,265 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SnackbarUtils.showError(context, next.errorMessage ?? "Login Failed");
       }
     });
+
+    final userState = ref.watch(userViewModelProvider);
+
+    final canUseBiometric =
+        userState.biometricAvailable == true &&
+        userState.biometricEnabled == true;
+    final bioLoading = userState.biometricLoading == true;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Container(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(height: 50),
-                  Container(
-                    width: 250,
-                    height: 250,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 2),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/artsphere_logo.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxW = constraints.maxWidth;
+            final maxH = constraints.maxHeight;
+
+            // Responsive sizing
+            final double logoSize = (maxW * 0.55).clamp(160.0, 250.0);
+            final double contentMaxWidth = (maxW).clamp(0, 520).toDouble();
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                   ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: maxH * 0.03),
 
-                  SizedBox(height: 31),
-
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 25),
-
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Image.asset('assets/icons/email_icon.png'),
-                      ),
-                      label: Text(
-                        'Email',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      hintText: 'Enter Your Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(67),
-                      ),
-                      filled: true,
-                      fillColor: Color.fromARGB(44, 201, 116, 166),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your email";
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 31),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _hiddenPassword,
-
-                    decoration: InputDecoration(
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Image.asset(
-                          'assets/icons/password_icon.png',
-                          width: 20,
-                          height: 20,
+                        // Logo
+                        Container(
+                          width: logoSize,
+                          height: logoSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black, width: 2),
+                            image: const DecorationImage(
+                              image: AssetImage(
+                                'assets/images/artsphere_logo.png',
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                      ),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _hiddenPassword = !_hiddenPassword;
-                          });
-                        },
-                        icon: Image.asset('assets/icons/hidden_icon.png'),
-                      ),
-                      label: Text(
-                        'Password',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      hintText: 'Enter Your Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(67),
-                      ),
-                      filled: true,
-                      fillColor: Color.fromARGB(44, 201, 116, 166),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter your password";
-                      }
-                      return null;
-                    },
-                  ),
 
-                  SizedBox(height: 30),
+                        SizedBox(height: maxH * 0.035),
 
-                  SizedBox(
-                    height: 35,
-                    width: 152,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFC974A6),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        _handleLogin();
-                      },
-                      child: Text("Login"),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    "Forgot Your Password ?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  SizedBox(height: 60),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: RichText(
-                      text: TextSpan(
-                        text: "Don't have an account? ",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF7B7979),
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Sign Up !",
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: const Text(
+                            "Login",
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: maxH * 0.03),
+
+                        // Email
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Image.asset('assets/icons/email_icon.png'),
+                            ),
+                            label: const Text(
+                              'Email',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            hintText: 'Enter Your Email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(67),
+                            ),
+                            filled: true,
+                            fillColor: const Color.fromARGB(44, 201, 116, 166),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Please enter your email";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: maxH * 0.03),
+
+                        // Password
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _hiddenPassword,
+                          decoration: InputDecoration(
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Image.asset(
+                                'assets/icons/password_icon.png',
+                                width: 20,
+                                height: 20,
+                              ),
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _hiddenPassword = !_hiddenPassword;
+                                });
+                              },
+                              icon: Image.asset('assets/icons/hidden_icon.png'),
+                            ),
+                            label: const Text(
+                              'Password',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            hintText: 'Enter Your Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(67),
+                            ),
+                            filled: true,
+                            fillColor: const Color.fromARGB(44, 201, 116, 166),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your password";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: maxH * 0.03),
+
+                        // Login button
+                        SizedBox(
+                          height: 42,
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC974A6),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: _handleLogin,
+                            child: const Text(
+                              "Login",
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Fingerprint button (only show if device supports + enabled)
+                        if (userState.biometricAvailable == true)
+                          SizedBox(
+                            height: 42,
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: (canUseBiometric && !bioLoading)
+                                  ? _handleBiometricLogin
+                                  : null,
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                side: const BorderSide(
+                                  color: Color(0xFFC974A6),
+                                ),
+                              ),
+                              icon: bioLoading
+                                  ? const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.fingerprint,
+                                      color: Color(0xFFC974A6),
+                                    ),
+                              label: Text(
+                                canUseBiometric
+                                    ? "Login with fingerprint"
+                                    : "Enable fingerprint login in Profile",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFFC974A6),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 10),
+
+                        TextButton(
+                          onPressed: () {
+                            AppRoutes.push(context, const ForgotPasswordPage());
+                          },
+                          child: const Text(
+                            "Forgot Your Password ?",
+                            style: TextStyle(
+                              fontSize: 14,
                               color: Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignupScreen(),
-                                  ),
-                                );
-                              },
                           ),
-                        ],
-                      ),
+                        ),
+
+                        SizedBox(height: maxH * 0.05),
+
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: RichText(
+                            text: TextSpan(
+                              text: "Don't have an account? ",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF7B7979),
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: "Sign Up !",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      AppRoutes.push(
+                                        context,
+                                        const SignupScreen(),
+                                      );
+                                    },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: maxH * 0.02),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

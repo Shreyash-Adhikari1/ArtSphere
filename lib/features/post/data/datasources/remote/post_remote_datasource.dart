@@ -49,7 +49,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
       // tags[] (backend should accept this)
       "tags": post.tags ?? [],
     });
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.createPost,
       data: formData,
@@ -72,7 +72,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
     String postId,
     EditPostApiModel post,
   ) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.patch(
       ApiEndpoints.editPost(postId),
       data: post.toJson(),
@@ -88,7 +88,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<List<PostApiModel>> getFeed() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getFeed,
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -105,7 +105,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<List<PostApiModel>> getFollowingFeed() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getFollowingFeed,
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -122,7 +122,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<List<PostApiModel>> getMyPosts() async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.get(
       ApiEndpoints.getMyPosts,
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -141,7 +141,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<List<PostApiModel>> getPostsByUser(String userId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
 
     final response = await _apiClient.get(
       ApiEndpoints.getPostsByUser(userId),
@@ -165,7 +165,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<bool> deletePost(String postId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.delete(
       ApiEndpoints.deletePost(postId),
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -178,7 +178,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<bool> likePost(String postId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.likePost(postId),
       options: Options(headers: {'Authorization': "Bearer $token"}),
@@ -191,7 +191,7 @@ class PostRemoteDatasource implements IPostRemoteDatasource {
 
   @override
   Future<bool> unlikePost(String postId) async {
-    final token = _tokenService.getToken();
+    final token = await _tokenService.getToken();
     final response = await _apiClient.post(
       ApiEndpoints.unlikePost(postId),
       options: Options(headers: {'Authorization': "Bearer $token"}),

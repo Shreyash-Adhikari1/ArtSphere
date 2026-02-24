@@ -89,21 +89,13 @@ class UserRepository implements IUserRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> logout() async {
+  Future<Either<Failure, bool>> logout({bool preserveToken = false}) async {
     try {
-      final result = await _userLocalDatasource.logout();
-      if (result) {
-        return Right(true);
-      }
-      return Left(LocalDatabaseFailure(message: "Cannot Log User Out"));
-    } on DioException catch (e) {
-      //We use DioException to catch all API errors [status codes and shit]
-      return Left(
-        ApiFailure(
-          message: e.response?.data['message'] ?? "Logout Failed",
-          statusCode: e.response?.statusCode,
-        ),
+      final result = await _userLocalDatasource.logout(
+        preserveToken: preserveToken,
       );
+      if (result) return const Right(true);
+      return Left(LocalDatabaseFailure(message: "Cannot Log User Out"));
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
@@ -215,6 +207,62 @@ class UserRepository implements IUserRepository {
       }
     } else {
       return Left(NetworkFailure(message: "Internet Required To Get Feed"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> requestPasswordReset(String email) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final msg = await _userRemoteDatasource.requestPasswordReset(email);
+        return Right(msg);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data?["message"]?.toString() ??
+                "Failed to request reset link",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet required to request reset"),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final ok = await _userRemoteDatasource.resetPassword(
+          token: token,
+          newPassword: newPassword,
+        );
+        return Right(ok);
+      } on DioException catch (e) {
+        return Left(
+          ApiFailure(
+            message:
+                e.response?.data?["message"]?.toString() ??
+                "Invalid or expired token",
+            statusCode: e.response?.statusCode,
+          ),
+        );
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return Left(
+        NetworkFailure(message: "Internet required to reset password"),
+      );
     }
   }
 }
