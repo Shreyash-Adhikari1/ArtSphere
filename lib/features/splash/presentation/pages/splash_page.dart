@@ -1,6 +1,9 @@
 import 'package:artsphere/app/routes/app_routes.dart';
+import 'package:artsphere/core/services/storage/onboarding_pref_service.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
+import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
+import 'package:artsphere/features/auth/presentation/pages/login_page.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +20,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(_boot);
+
+    Future.delayed(const Duration(seconds: 3), () async {
+      final session = ref.read(userSessionServiceProvider);
+      final onboarding = ref.read(onboardingPrefServiceProvider);
+
+      final isLoggedIn = session.isLoggedIn();
+      final seenOnboarding = onboarding.hasSeen();
+
+      if (!mounted) return;
+
+      if (isLoggedIn) {
+        AppRoutes.pushReplacement(context, HomeScreen());
+        return;
+      }
+
+      // Not logged in:
+      // If first time → onboarding, else → login
+      if (!seenOnboarding) {
+        AppRoutes.pushReplacement(context, const OnboardingScreen());
+      } else {
+        AppRoutes.pushReplacement(context, const LoginScreen());
+      }
+    });
   }
 
   Future<void> _boot() async {
