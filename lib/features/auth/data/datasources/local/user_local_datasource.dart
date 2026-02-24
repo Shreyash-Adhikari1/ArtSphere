@@ -88,4 +88,14 @@ class UserLocalDatasource implements IUserLocalDatasource {
   Future<UserHiveModel> registerUser(UserHiveModel model) async {
     return await _hiveService.registerUser(model);
   }
+
+  @override
+  Future<void> cacheMyProfile(UserHiveModel model) async {
+    await _hiveService.cacheMyProfile(model);
+  }
+
+  @override
+  Future<UserHiveModel?> getCachedMyProfile() async {
+    return _hiveService.getCachedMyProfile();
+  }
 }

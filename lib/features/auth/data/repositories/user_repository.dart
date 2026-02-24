@@ -165,15 +165,30 @@ class UserRepository implements IUserRepository {
     if (await _networkInfo.isConnected) {
       try {
         final user = await _userRemoteDatasource.getMyProfile();
+
         if (user != null) {
-          final userEntity = user.toEntity();
-          return Right(userEntity);
+          final hiveModel = UserHiveModel(
+            userId: user.id,
+            email: user.email,
+            fullName: user.fullName,
+            username: user.username,
+            phoneNumber: user.phoneNumber,
+            address: user.address,
+            avatar: user.avatar,
+            password: null,
+            confirmPassword: null,
+          );
+
+          await _userLocalDatasource.cacheMyProfile(hiveModel);
+
+          return Right(user.toEntity());
         }
-        return Left(ApiFailure(message: "Couldnot get current user"));
+
+        return Left(ApiFailure(message: "Could not get profile"));
       } on DioException catch (e) {
         return Left(
           ApiFailure(
-            message: e.response?.data['message'] ?? "Couldnt get user",
+            message: e.response?.data['message'] ?? "Could not get profile",
             statusCode: e.response?.statusCode,
           ),
         );
@@ -181,7 +196,17 @@ class UserRepository implements IUserRepository {
         return Left(ApiFailure(message: e.toString()));
       }
     } else {
-      return Left(NetworkFailure(message: "Internet Required To Get Feed"));
+      try {
+        final cached = await _userLocalDatasource.getCachedMyProfile();
+        if (cached != null) {
+          return Right(cached.toEntity());
+        }
+        return Left(
+          LocalDatabaseFailure(message: "No cached profile available offline"),
+        );
+      } catch (e) {
+        return Left(LocalDatabaseFailure(message: e.toString()));
+      }
     }
   }
 

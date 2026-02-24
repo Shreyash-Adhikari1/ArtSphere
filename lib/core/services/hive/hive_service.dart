@@ -10,6 +10,7 @@ final hiveServiceProvider = Provider<HiveService>((ref) {
 });
 
 class HiveService {
+  static const String _cachedProfileKey = "__cached_profile__";
   Future<void> init() async {
     final directory = await getApplicationDocumentsDirectory();
 
@@ -60,7 +61,7 @@ class HiveService {
 
   // user logout
   Future<void> logout() async {
-    await _userBox.clear();
+    await _userBox.delete(_cachedProfileKey);
   }
 
   // Get Current User.
@@ -71,5 +72,15 @@ class HiveService {
   bool isEmailExists(String email) {
     final users = _userBox.values.where((user) => user.email == email);
     return users.isNotEmpty;
+  }
+
+  // Save last known profile (from API) for offline viewing
+  Future<void> cacheMyProfile(UserHiveModel model) async {
+    await _userBox.put(_cachedProfileKey, model);
+  }
+
+  // Read last known cached profile (offline)
+  UserHiveModel? getCachedMyProfile() {
+    return _userBox.get(_cachedProfileKey);
   }
 }
