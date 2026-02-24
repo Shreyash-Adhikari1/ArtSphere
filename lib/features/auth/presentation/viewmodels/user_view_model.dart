@@ -1,6 +1,7 @@
 import 'package:artsphere/core/services/biometrics/biometric_service.dart';
 import 'package:artsphere/core/services/storage/biometric_pref_service.dart';
 import 'package:artsphere/core/services/storage/token_service.dart';
+import 'package:artsphere/core/services/storage/user_session_service.dart';
 import 'package:artsphere/features/auth/domain/usecases/edit_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/get_profile_usecase.dart';
 import 'package:artsphere/features/auth/domain/usecases/get_users_profile_usecase.dart';
@@ -410,7 +411,19 @@ class UserViewModel extends Notifier<UserState> {
         );
         return false;
       },
-      (profile) {
+      (profile) async {
+        // ✅ Mark session as logged in (so splash works after restart)
+        final session = ref.read(userSessionServiceProvider);
+        await session.saveUserSession(
+          userId: profile.userId ?? "",
+          email: profile.email,
+          fullName: profile.fullName,
+          username: profile.username,
+          phoneNumber: profile.phoneNumber,
+          address: profile.address,
+          profilePicture: profile.avatar,
+        );
+
         state = state.copyWith(
           biometricLoading: false,
           status: UserStatus.authenticated,
