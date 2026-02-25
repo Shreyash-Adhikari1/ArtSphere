@@ -26,20 +26,16 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
     with SingleTickerProviderStateMixin {
   static const _pink = Color(0xFFC974A6);
 
-  // Cooldown to avoid shake-like spam
   static const Duration _shakeCooldown = Duration(milliseconds: 1500);
   DateTime? _lastShakeLikeAt;
 
-  // Heart pop animation
   late final AnimationController _anim;
   late final Animation<double> _scale;
   late final Animation<double> _opacity;
 
-  // Visibility key
   late final Key _visibilityKey;
 
-  // ✅ Stable subscription (so we DON'T listen inside build)
-  ProviderSubscription<AsyncValue<void>>? _shakeSub;
+  ProviderSubscription<AsyncValue<int>>? _shakeSub;
 
   @override
   void initState() {
@@ -64,28 +60,31 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
 
-    // ✅ Listen once. Read fresh state at event time.
-    _shakeSub = ref.listenManual<AsyncValue<void>>(shakeStreamProvider, (
+    // Ensure service exists before listening
+    ref.read(shakeServiceProvider);
+
+    _shakeSub = ref.listenManual<AsyncValue<int>>(shakeStreamProvider, (
       prev,
       next,
     ) async {
       if (!next.hasValue) return;
+      if (!mounted) return;
 
-      final activeId = ref.read(activePostFocusProvider);
       final myId = ref.read(userViewModelProvider).userEntity?.userId;
       if (myId == null) return;
 
+      final focus = ref.read(activePostFocusProvider);
       final postState = ref.read(postViewModelProvider);
       final vm = ref.read(postViewModelProvider.notifier);
 
       final currentPost = _currentPostFromState(postState);
       final currentId = currentPost.postId;
 
-      // Only the active/visible card reacts
-      if (currentId == null || activeId != currentId) return;
+      // Only active/visible card reacts
+      if (currentId == null || focus.postId != currentId) return;
 
       final isLiked = (currentPost.likedBy ?? const []).contains(myId);
-      if (isLiked) return; // like-only
+      if (isLiked) return;
 
       final likeBusy = (postState.likeBusy[currentId] == true);
       if (likeBusy) return;
@@ -108,6 +107,26 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
     _shakeSub?.close();
     _anim.dispose();
     super.dispose();
+  }
+
+  bool _cooldownReady() {
+    final last = _lastShakeLikeAt;
+    if (last == null) return true;
+    return DateTime.now().difference(last) >= _shakeCooldown;
+  }
+
+  Future<void> _playLikedFeedback() async {
+    HapticFeedback.lightImpact();
+
+    // Pop in
+    await _anim.forward(from: 0);
+
+    // Small hold
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    // Fade out
+    if (!mounted) return;
+    await _anim.reverse();
   }
 
   String _formatTime(DateTime? date) {
@@ -150,21 +169,11 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
     return '${ApiEndpoints.profileImages}/$fileName';
   }
 
-  bool _cooldownReady() {
-    final last = _lastShakeLikeAt;
-    if (last == null) return true;
-    return DateTime.now().difference(last) >= _shakeCooldown;
-  }
-
-  void _playLikedFeedback() {
-    HapticFeedback.lightImpact();
-    _anim.forward(from: 0);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Ensure shake listener provider is created (single global listener)
+    // Keep providers alive
     ref.watch(shakeServiceProvider);
+    ref.watch(shakeStreamProvider);
 
     final userState = ref.watch(userViewModelProvider);
     final myUserId = userState.userEntity?.userId;
@@ -205,27 +214,22 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
         myUserId: myUserId,
       );
 
-      if (!wasLiked) {
-        _playLikedFeedback();
-      }
+      if (!wasLiked) _playLikedFeedback();
     }
 
     return VisibilityDetector(
       key: _visibilityKey,
       onVisibilityChanged: (info) {
+        if (!mounted) return;
+
         final id = currentPost.postId;
         if (id == null) return;
 
         final visible = info.visibleFraction;
-
-        // debug
-        debugPrint("VISIBLE $id -> $visible");
-
         final focus = ref.read(activePostFocusProvider);
 
-        // If this card is more visible than the current focus, take focus.
-        // (0.05 margin avoids rapid flip-flop)
-        if (visible >= 0.25 && visible > focus.fraction + 0.05) {
+        // If no focus yet, and card is visible enough, take focus
+        if (focus.postId == null && visible >= 0.6) {
           ref.read(activePostFocusProvider.notifier).state = ActivePostFocus(
             postId: id,
             fraction: visible,
@@ -233,10 +237,21 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
           return;
         }
 
-        // If THIS card is the active one but it becomes mostly hidden, clear focus.
-        if (focus.postId == id && visible < 0.15) {
-          ref.read(activePostFocusProvider.notifier).state =
-              ActivePostFocus.empty;
+        // If this is focused, keep updating its fraction
+        if (focus.postId == id) {
+          ref.read(activePostFocusProvider.notifier).state = ActivePostFocus(
+            postId: id,
+            fraction: visible,
+          );
+          return;
+        }
+
+        // If this card is strong and focus is weaker, switch focus
+        if (visible >= 0.75 && visible > focus.fraction + 0.02) {
+          ref.read(activePostFocusProvider.notifier).state = ActivePostFocus(
+            postId: id,
+            fraction: visible,
+          );
         }
       },
       child: Container(
@@ -294,9 +309,7 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
                 const Icon(Icons.vibration, size: 18, color: Colors.black38),
               ],
             ),
-
             const SizedBox(height: 14),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: AspectRatio(
@@ -326,16 +339,14 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
                             child: Icon(Icons.image, size: 40),
                           ),
                         ),
-
                       if (likeBusy)
                         Container(color: Colors.black.withOpacity(0.04)),
-
                       IgnorePointer(
                         child: AnimatedBuilder(
                           animation: _anim,
                           builder: (context, _) {
-                            final opacity = _opacity.value;
-                            if (opacity <= 0.01) return const SizedBox.shrink();
+                            if (_opacity.value <= 0.01)
+                              return const SizedBox.shrink();
                             return Center(
                               child: Opacity(
                                 opacity: (1 - (_anim.value * 0.7)).clamp(
@@ -360,9 +371,7 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
                 ),
               ),
             ),
-
             const SizedBox(height: 10),
-
             if (currentPost.caption != null && currentPost.caption!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
@@ -371,9 +380,7 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
                   style: const TextStyle(fontSize: 13.5, color: Colors.black87),
                 ),
               ),
-
             const SizedBox(height: 10),
-
             Row(
               children: [
                 IconButton(
