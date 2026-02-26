@@ -427,31 +427,49 @@ class _PostcardWidgetState extends ConsumerState<PostcardWidget>
   }
 
   PostEntity _currentPostFromState(PostState state) {
-    PostEntity currentPost = widget.post;
     final id = widget.post.postId;
-    if (id == null) return currentPost;
+    if (id == null) return widget.post;
 
-    PostEntity? found;
+    bool hasAuthor(PostEntity p) {
+      final a = p.author;
+      if (a == null) return false;
+      final u = a.username.trim();
+      final av = (a.avatar ?? '').trim();
+      return u.isNotEmpty || av.isNotEmpty;
+    }
 
-    found = state.discoverPosts.cast<PostEntity?>().firstWhere(
-      (p) => p?.postId == id,
-      orElse: () => null,
-    );
-    found ??= state.followingPosts.cast<PostEntity?>().firstWhere(
-      (p) => p?.postId == id,
-      orElse: () => null,
-    );
-    found ??= state.myPosts.cast<PostEntity?>().firstWhere(
-      (p) => p?.postId == id,
-      orElse: () => null,
-    );
-    found ??= state.userPosts.cast<PostEntity?>().firstWhere(
-      (p) => p?.postId == id,
-      orElse: () => null,
+    final candidates = <PostEntity>[
+      ...state.discoverPosts.where((p) => p.postId == id),
+      ...state.followingPosts.where((p) => p.postId == id),
+      ...state.myPosts.where((p) => p.postId == id),
+      ...state.userPosts.where((p) => p.postId == id),
+    ];
+
+    if (candidates.isEmpty) return widget.post;
+
+    final best = candidates.firstWhere(
+      hasAuthor,
+      orElse: () => candidates.first,
     );
 
-    if (found != null) currentPost = found;
-    return currentPost;
+    // If best has no author, fall back to widget.post.author (sometimes that one is correct)
+    final mergedAuthor = hasAuthor(best) ? best.author : widget.post.author;
+
+    return PostEntity(
+      postId: best.postId,
+      author: mergedAuthor,
+      media: best.media,
+      mediaType: best.mediaType,
+      caption: best.caption,
+      tags: best.tags,
+      visibility: best.visibility,
+      likeCount: best.likeCount,
+      likedBy: best.likedBy,
+      commentCount: best.commentCount,
+      commentedBy: best.commentedBy,
+      isChallengeSubmission: best.isChallengeSubmission,
+      createdAt: best.createdAt,
+    );
   }
 }
 
