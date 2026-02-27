@@ -18,9 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockRegisterUsecase extends Mock implements RegisterUsecase {}
 
 class MockLoginUsecase extends Mock implements LoginUsecase {}
@@ -49,9 +47,7 @@ class MockUserSessionService extends Mock implements UserSessionService {}
 
 class MockUserEntity extends Mock implements UserEntity {}
 
-// =======================
 // Fakes (for any())
-// =======================
 class FakeLoginParams extends Fake implements LoginUsecaseParams {}
 
 class FakeRegisterParams extends Fake implements RegisterUsecaseParams {}
@@ -192,9 +188,7 @@ void main() {
     ).thenAnswer((_) async {});
   });
 
-  // =========================================================
   // TEST 1: build() initializes biometrics flags
-  // =========================================================
   test(
     'build() -> sets biometricAvailable and biometricEnabled correctly',
     () async {
@@ -216,9 +210,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 2: setBiometricEnabled(true) blocked when biometrics not available
-  // =========================================================
   test(
     'setBiometricEnabled(true) when not available -> sets error and does not authenticate/save',
     () async {
@@ -246,9 +238,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 3: loginWithBiometrics() success path
-  // =========================================================
   test(
     'loginWithBiometrics success -> saves session, sets authenticated, returns true',
     () async {
@@ -261,7 +251,6 @@ void main() {
         () => mockTokenService.getToken(),
       ).thenAnswer((_) async => "token123");
 
-      // IMPORTANT: use a Mock (not Fake) and stub getters used in loginWithBiometrics()
       final profile = UserEntity(
         userId: "u-1",
         fullName: "Test User",
@@ -307,15 +296,13 @@ void main() {
           username: "testuser",
           phoneNumber: "9800000000",
           address: "Kathmandu",
-          profilePicture: "avatar.png", // <-- comes from profile.avatar
+          profilePicture: "avatar.png",
         ),
       ).called(1);
     },
   );
 
-  // =========================================================
   // TEST 4: loginWithBiometrics() fails when no token stored
-  // =========================================================
   test('loginWithBiometrics -> no token -> error, returns false', () async {
     when(() => mockBiometricService.canCheck()).thenAnswer((_) async => true);
     when(() => mockBiometricPref.isEnabled()).thenReturn(true);
@@ -361,9 +348,7 @@ void main() {
     );
   });
 
-  // =========================================================
   // TEST 5: requestPasswordReset() success -> resetLinkSent + message + returns true
-  // =========================================================
   test(
     'requestPasswordReset success -> sets resetLinkSent and resetMessage, returns true',
     () async {

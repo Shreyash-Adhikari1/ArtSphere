@@ -16,9 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockCreatePostUsecase extends Mock implements CreatePostUsecase {}
 
 class MockEditPostUsecase extends Mock implements EditPostUsecase {}
@@ -38,9 +36,7 @@ class MockLikePostUsecase extends Mock implements LikePostUsecase {}
 
 class MockUnlikePostUsecase extends Mock implements UnlikePostUsecase {}
 
-// =======================
 // Fakes for any()
-// =======================
 class FakeCreatePostParams extends Fake implements CreatePostUsecaseParams {}
 
 class FakeEditPostParams extends Fake implements EditPostUsecaseParams {}
@@ -101,7 +97,7 @@ void main() {
     mockLikePost = MockLikePostUsecase();
     mockUnlikePost = MockUnlikePostUsecase();
 
-    // Safe defaults (so tests don't crash unexpectedly)
+    // Safe defaults
     when(
       () => mockGetFeed(),
     ).thenAnswer((_) async => const Right(<PostEntity>[]));
@@ -127,9 +123,7 @@ void main() {
     when(() => mockEditPost(any())).thenAnswer((_) async => const Right(true));
   });
 
-  // =========================================================
   // TEST 1: loadDiscoverFeed success -> discoverPosts set & loading false
-  // =========================================================
   test(
     'loadDiscoverFeed success -> sets discoverPosts and turns off discoverLoading',
     () async {
@@ -156,9 +150,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 2: createPost success -> prepends to discoverPosts + myPosts & returns post
-  // =========================================================
   test(
     'createPost success -> prepends created post to discoverPosts & myPosts',
     () async {
@@ -193,9 +185,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 3: deletePost failure -> optimistic remove then rollback to old lists + error
-  // =========================================================
   test(
     'deletePost failure -> rolls back lists and sets errorMessage',
     () async {
@@ -239,9 +229,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 4: toggleLike (like success) -> optimistic update + calls like usecase + clears busy
-  // =========================================================
   test(
     'toggleLike like success -> increments likeCount, adds myUserId, calls like usecase',
     () async {
@@ -278,9 +266,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 5: toggleLike (unlike failure) -> rollback to original post + sets error + clears busy
-  // =========================================================
   test(
     'toggleLike unlike failure -> rolls back post state and sets errorMessage',
     () async {

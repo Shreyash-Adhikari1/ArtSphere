@@ -10,18 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockFollowUsecase extends Mock implements FollowUsecase {}
 
 class MockUnfollowUsecase extends Mock implements UnfollowUsecase {}
 
 class MockGetIsFollowingUsecase extends Mock implements GetIsFollowingUsecase {}
 
-// =======================
 // Fakes for any()
-// =======================
 class FakeFollowParams extends Fake implements FollowUsecaseParams {}
 
 class FakeUnfollowParams extends Fake implements UnfollowUsecaseParams {}
@@ -33,7 +29,7 @@ void main() {
   late MockUnfollowUsecase mockUnfollow;
   late MockGetIsFollowingUsecase mockGetIsFollowing;
 
-  // A valid FollowEntity (because your usecases return FollowEntity, not bool)
+  // A valid FollowEntity
   late FollowEntity dummyFollow;
 
   ProviderContainer makeContainer() {
@@ -57,7 +53,7 @@ void main() {
     mockUnfollow = MockUnfollowUsecase();
     mockGetIsFollowing = MockGetIsFollowingUsecase();
 
-    // minimal valid user entities (your UserEntity has required fields)
+    // minimal valid user entities
     const me = UserEntity(
       userId: "me",
       fullName: "Me",
@@ -92,9 +88,7 @@ void main() {
     ).thenAnswer((_) async => const Right(true));
   });
 
-  // =========================================================
   // TEST 1: fetchIsFollowing caches result and avoids duplicate calls
-  // =========================================================
   test('fetchIsFollowing caches result and avoids duplicate calls', () async {
     when(
       () => mockGetIsFollowing(any()),
@@ -110,15 +104,13 @@ void main() {
     final state1 = container.read(followViewModelProvider);
     expect(state1.isFollowingCache["user123"], true);
 
-    // Call again without force -> should NOT call usecase again
+    // Call again without force
     await vm.fetchIsFollowing("user123");
 
     verify(() => mockGetIsFollowing(any())).called(1);
   });
 
-  // =========================================================
   // TEST 2: toggleFollow success -> optimistic cache update + busy clears
-  // =========================================================
   test('toggleFollow success -> updates cache and clears busy flag', () async {
     when(() => mockFollow(any())).thenAnswer((_) async => Right(dummyFollow));
 
@@ -138,9 +130,7 @@ void main() {
     verifyNever(() => mockUnfollow(any()));
   });
 
-  // =========================================================
   // TEST 3: toggleFollow failure -> rollback cache + errorMessage + busy clears
-  // =========================================================
   test(
     'toggleFollow failure -> rolls back cache and sets errorMessage',
     () async {

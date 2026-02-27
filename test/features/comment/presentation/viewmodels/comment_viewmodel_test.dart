@@ -14,9 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockCreateCommentUsecase extends Mock implements CreateCommentUsecase {}
 
 class MockGetCommentsUsecase extends Mock implements GetCommentsUsecase {}
@@ -27,9 +25,7 @@ class MockUnlikeCommentUsecase extends Mock implements UnlikeCommentUsecase {}
 
 class MockDeleteCommentUsecase extends Mock implements DeleteCommentUsecase {}
 
-// =======================
 // Fakes for any()
-// =======================
 class FakeGetCommentsParams extends Fake implements GetCommentsUsecaseParams {}
 
 class FakeCreateCommentParams extends Fake
@@ -95,9 +91,7 @@ void main() {
     when(() => mockUnlike(any())).thenAnswer((_) async => const Right(true));
   });
 
-  // =========================================================
   // TEST 1: loadComments success -> sets activePostId, fills comments, loading false
-  // =========================================================
   test('loadComments success -> sets comments and turns off loading', () async {
     final comments = [
       const CommentEntity(commentId: "c1", postId: "p1", commentText: "first"),
@@ -122,9 +116,7 @@ void main() {
     verify(() => mockGet(any())).called(1);
   });
 
-  // =========================================================
   // TEST 2: loadComments ignores stale response if user switched activePostId mid-flight
-  // =========================================================
   test(
     'loadComments -> stale response ignored when activePostId changes (Completer)',
     () async {
@@ -161,14 +153,11 @@ void main() {
       expect(state.activePostId, "p2");
       expect(state.comments, isEmpty);
 
-      // NOTE: commentsLoading may remain true until loadComments("p2") is called.
       verify(() => mockGet(any())).called(1);
     },
   );
 
-  // =========================================================
   // TEST 3: createComment success -> prepends only if still on same activePostId
-  // =========================================================
   test(
     'createComment success -> prepends comment when activePostId matches',
     () async {
@@ -203,9 +192,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 4: toggleLike unlike failure -> rolls back + sets error + clears busy flag
-  // =========================================================
   test(
     'toggleLike unlike failure -> rollback comment and set errorMessage',
     () async {

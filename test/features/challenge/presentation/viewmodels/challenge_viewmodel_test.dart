@@ -13,9 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockCreateChallengeUsecase extends Mock
     implements CreateChallengeUsecase {}
 
@@ -33,9 +31,7 @@ class MockGetMyChallengesUsecase extends Mock
 class MockGetChallengeByIdUsecase extends Mock
     implements GetChallengeByIdUsecase {}
 
-// =======================
 // Fakes for any()
-// =======================
 class FakeCreateParams extends Fake implements CreateChallengeUsecaseParams {}
 
 class FakeEditParams extends Fake implements EditChallengeUsecaseParams {}
@@ -99,9 +95,7 @@ void main() {
     when(() => mockDelete(any())).thenAnswer((_) async => const Right(true));
   });
 
-  // =========================================================
   // TEST 1: loadDiscoverChallenges success
-  // =========================================================
   test(
     'loadDiscoverChallenges success -> sets discoverChallenges and turns off loading',
     () async {
@@ -127,10 +121,7 @@ void main() {
       verify(() => mockGetAll()).called(1);
     },
   );
-
-  // =========================================================
   // TEST 2: createChallenge success -> prepends to discover + my lists
-  // =========================================================
   test(
     'createChallenge success -> prepends created into discoverChallenges and myChallenges',
     () async {
@@ -190,9 +181,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 3: editChallenge empty id -> sets error and does NOT call usecase
-  // =========================================================
   test(
     'editChallenge with empty challengeId -> sets errorMessage and returns null',
     () async {
@@ -202,7 +191,7 @@ void main() {
       final vm = container.read(challengeViewModelProvider.notifier);
 
       final params = EditChallengeUsecaseParams(
-        challengeId: "   ", // empty after trim
+        challengeId: "   ",
         challengeTitle: "Updated",
       );
 
@@ -217,9 +206,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 4: loadChallengeDetails success -> activeChallenge set and loading false
-  // =========================================================
   test(
     'loadChallengeDetails success -> sets activeChallenge and turns off detailsLoading',
     () async {
@@ -258,9 +245,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 5: deleteChallenge failure -> optimistic remove then rollback + busy cleared
-  // =========================================================
   test(
     'deleteChallenge failure -> rolls back lists, sets errorMessage, clears busy flag',
     () async {

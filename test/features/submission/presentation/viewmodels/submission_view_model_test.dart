@@ -12,9 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// =======================
 // Mocks
-// =======================
 class MockGetForChallenge extends Mock
     implements GetSubmissionsForChallengeUsecase {}
 
@@ -25,9 +23,7 @@ class MockCreateAndSubmit extends Mock
 
 class MockDeleteSubmission extends Mock implements DeleteSubmissionUsecase {}
 
-// =======================
 // Fakes for any()
-// =======================
 class FakeGetForChallengeParams extends Fake
     implements GetSubmissionsForChallengeUsecaseParams {}
 
@@ -101,9 +97,7 @@ void main() {
     when(() => mockDelete(any())).thenAnswer((_) async => const Right(true));
   });
 
-  // =========================================================
   // TEST 1: loadSubmissions success -> status success + submissions set
-  // =========================================================
   test(
     'loadSubmissions success -> sets status success and submissions',
     () async {
@@ -142,9 +136,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 2: refresh does nothing if no active challenge loaded yet
-  // =========================================================
   test(
     'refresh without active challengeId -> does not call getForChallenge',
     () async {
@@ -159,9 +151,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 3: submitExistingPost success -> sets action success, lastActionResult, calls refresh
-  // =========================================================
   test(
     'submitExistingPost success -> action success + lastActionResult + refresh called',
     () async {
@@ -206,9 +196,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 4: createNewPostAndSubmit success -> action success, lastActionResult, refresh called
-  // =========================================================
   test(
     'createNewPostAndSubmit success -> action success + lastActionResult + refresh called',
     () async {
@@ -249,9 +237,7 @@ void main() {
     },
   );
 
-  // =========================================================
   // TEST 5: deleteSubmission failure -> rollback list + action failure + deletingSubmissionId cleared
-  // =========================================================
   test(
     'deleteSubmission failure -> rolls back list and sets action failure',
     () async {
