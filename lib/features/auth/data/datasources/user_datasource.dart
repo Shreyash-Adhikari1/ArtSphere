@@ -12,6 +12,9 @@ abstract interface class IUserLocalDatasource {
 
   // Method to check if email exixts
   Future<bool> isEmailExists(String email);
+
+  Future<void> cacheMyProfile(UserHiveModel model);
+  Future<UserHiveModel?> getCachedMyProfile();
 }
 
 abstract interface class IUserRemoteDatasource {

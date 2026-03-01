@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:artsphere/features/post/presentation/pages/create_post_page.dart';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,65 +12,128 @@ class AddPostPage extends StatefulWidget {
   State<AddPostPage> createState() => _AddPostPageState();
 }
 
-class _AddPostPageState extends State<AddPostPage> {
+class _AddPostPageState extends State<AddPostPage> with WidgetsBindingObserver {
   final ImagePicker _picker = ImagePicker();
 
-  List<XFile> _recent = [];
-  XFile? _selected;
-  bool _loading = false;
+  CameraController? _camera;
+  List<CameraDescription> _cameras = [];
 
-  // A soft Artsphere pink (same vibe as your UI)
+  XFile? _selected; // captured or picked
+  bool _loadingCamera = true;
+  bool _capturing = false;
+
   static const _pink = Color(0xFFC974A6);
+
+  bool get _canNext => _selected != null;
 
   @override
   void initState() {
     super.initState();
-    _loadRecent();
+    WidgetsBinding.instance.addObserver(this);
+    _initCamera();
   }
 
-  Future<void> _loadRecent() async {
-    setState(() => _loading = true);
-    try {
-      // You can’t truly list the full gallery with image_picker,
-      // but you can let users pick multiple as “recents”.
-      // UX: “Choose from Gallery” opens multi-pick, we show the picks as grid.
-      // This keeps code simple and works reliably.
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _camera?.dispose();
+    super.dispose();
+  }
 
-      // Start empty; user can pick recents.
-      _recent = [];
-    } finally {
-      setState(() => _loading = false);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final cam = _camera;
+    if (cam == null) return;
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      cam.dispose();
+      _camera = null;
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      _initCamera();
     }
   }
 
-  Future<void> _chooseFromGallery() async {
-    try {
-      final files = await _picker.pickMultiImage(imageQuality: 90);
-      if (files.isEmpty) return;
+  Future<void> _initCamera() async {
+    setState(() => _loadingCamera = true);
 
+    try {
+      debugPrint("GETTING CAMERAS...");
+      _cameras = await availableCameras();
+      debugPrint("CAMERAS FOUND: ${_cameras.length}");
+
+      if (_cameras.isEmpty) {
+        debugPrint("NO CAMERAS FOUND");
+        setState(() => _loadingCamera = false);
+        return;
+      }
+
+      final back = _cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => _cameras.first,
+      );
+
+      debugPrint("INITIALIZING CAMERA...");
+      final controller = CameraController(
+        back,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+
+      await controller.initialize();
+      debugPrint("CAMERA INITIALIZED");
+
+      await _camera?.dispose();
+      _camera = controller;
+
+      if (!mounted) return;
+      setState(() => _loadingCamera = false);
+    } catch (e) {
+      debugPrint("CAMERA ERROR: $e");
+      if (!mounted) return;
+      setState(() => _loadingCamera = false);
+    }
+  }
+
+  Future<void> _capture() async {
+    final cam = _camera;
+    if (cam == null) return;
+    if (!cam.value.isInitialized) return;
+    if (_capturing) return;
+
+    setState(() => _capturing = true);
+    try {
+      final file = await cam.takePicture();
+      if (!mounted) return;
       setState(() {
-        _recent = files;
-        _selected ??= files.first;
+        _selected = file;
+      });
+    } catch (_) {
+      // ignore
+    } finally {
+      if (!mounted) return;
+      setState(() => _capturing = false);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 92,
+      );
+      if (file == null) return;
+
+      if (!mounted) return;
+      setState(() {
+        _selected = file;
       });
     } catch (_) {
       // ignore
     }
-  }
-
-  Future<void> _chooseSingle() async {
-    try {
-      final file = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 90,
-      );
-      if (file == null) return;
-
-      setState(() {
-        // put it at top like “recent”
-        _recent = [file, ..._recent.where((x) => x.path != file.path)];
-        _selected = file;
-      });
-    } catch (_) {}
   }
 
   void _goNext() {
@@ -82,174 +147,278 @@ class _AddPostPageState extends State<AddPostPage> {
     );
   }
 
+  Future<void> _flipCamera() async {
+    if (_cameras.length < 2) return;
+
+    final current = _camera?.description;
+    if (current == null) return;
+
+    final next = _cameras.firstWhere(
+      (c) => c.lensDirection != current.lensDirection,
+      orElse: () => _cameras.first,
+    );
+
+    setState(() => _loadingCamera = true);
+    try {
+      final controller = CameraController(
+        next,
+        ResolutionPreset.high,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+      await controller.initialize();
+
+      await _camera?.dispose();
+      _camera = controller;
+
+      if (!mounted) return;
+      setState(() => _loadingCamera = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCamera = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final canNext = _selected != null;
+    final cam = _camera;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.black,
+        surfaceTintColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           "New Post",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: canNext ? _goNext : null,
+            onPressed: _canNext ? _goNext : null,
             child: Text(
               "Next",
               style: TextStyle(
-                color: canNext ? _pink : Colors.grey.shade400,
-                fontWeight: FontWeight.w700,
+                color: _canNext ? _pink : Colors.white38,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
         ],
       ),
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  const SizedBox(height: 8),
-
-                  // Big preview
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: AspectRatio(
-                      aspectRatio: 1.15,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Container(
-                          color: Colors.grey.shade100,
-                          child: _selected == null
-                              ? _EmptyPreview(onPick: _chooseSingle)
-                              : Image.file(
-                                  File(_selected!.path),
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // "Choose from Gallery" row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Text(
-                          "Choose from Gallery",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: _chooseFromGallery,
-                          icon: const Icon(Icons.photo_library_outlined),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Grid
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _recent.isEmpty
-                          ? _EmptyGrid(onPick: _chooseFromGallery)
-                          : GridView.builder(
-                              itemCount: _recent.length,
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                  ),
-                              itemBuilder: (context, i) {
-                                final x = _recent[i];
-                                final isSelected = _selected?.path == x.path;
-
-                                return GestureDetector(
-                                  onTap: () => setState(() => _selected = x),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: Image.file(
-                                          File(x.path),
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          height: double.infinity,
-                                        ),
-                                      ),
-                                      if (isSelected)
-                                        Positioned.fill(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              border: Border.all(
-                                                color: _pink,
-                                                width: 3,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              },
+        child: Column(
+          children: [
+            // Main preview area (camera or selected image)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    color: Colors.black,
+                    child: _selected != null
+                        ? Image.file(
+                            File(_selected!.path),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : _loadingCamera
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
+                          )
+                        : (cam == null || !cam.value.isInitialized)
+                        ? _CameraUnavailable(onPickGallery: _pickFromGallery)
+                        : CameraPreview(cam),
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom controls (Instagram vibe)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Gallery button
+                  _BottomIconButton(
+                    label: "Gallery",
+                    icon: Icons.photo_library_outlined,
+                    onTap: _pickFromGallery,
+                  ),
+
+                  const Spacer(),
+
+                  // Shutter
+                  GestureDetector(
+                    onTap: _selected != null ? null : _capture,
+                    child: Opacity(
+                      opacity: (_selected != null) ? 0.35 : 1,
+                      child: _ShutterButton(busy: _capturing, accent: _pink),
                     ),
+                  ),
+
+                  const Spacer(),
+
+                  // Flip camera (only if no selection)
+                  _BottomIconButton(
+                    label: "Flip",
+                    icon: Icons.cameraswitch_outlined,
+                    onTap: _selected != null ? null : _flipCamera,
+                    disabled: _selected != null || _cameras.length < 2,
                   ),
                 ],
               ),
+            ),
+
+            // Small hint row when selected
+            if (_selected != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => setState(() => _selected = null),
+                      icon: const Icon(Icons.refresh, color: Colors.white70),
+                      label: const Text(
+                        "Retake / Choose another",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _EmptyPreview extends StatelessWidget {
-  final VoidCallback onPick;
-  const _EmptyPreview({required this.onPick});
+class _CameraUnavailable extends StatelessWidget {
+  const _CameraUnavailable({required this.onPickGallery});
+  final VoidCallback onPickGallery;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: TextButton.icon(
-        onPressed: onPick,
-        icon: const Icon(Icons.add_photo_alternate_outlined),
-        label: const Text("Pick an image"),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.camera_alt_outlined,
+              size: 42,
+              color: Colors.white70,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Camera unavailable",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "You can still choose a photo from your gallery.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: onPickGallery,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text("Open Gallery"),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _EmptyGrid extends StatelessWidget {
-  final VoidCallback onPick;
-  const _EmptyGrid({required this.onPick});
+class _BottomIconButton extends StatelessWidget {
+  const _BottomIconButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.disabled = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: onPick,
-        child: const Text("Select images to show here"),
+    return Opacity(
+      opacity: disabled ? 0.35 : 1.0,
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 26),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShutterButton extends StatelessWidget {
+  const _ShutterButton({required this.busy, required this.accent});
+  final bool busy;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 74,
+      height: 74,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 4),
+      ),
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: busy ? 26 : 58,
+          height: busy ? 26 : 58,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: busy ? Colors.white : accent,
+          ),
+        ),
       ),
     );
   }
