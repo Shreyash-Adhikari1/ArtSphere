@@ -55,11 +55,11 @@ class _NewPostDetailsScreenState extends ConsumerState<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(postViewModelProvider);
-
     final loading = state.actionLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -75,100 +75,117 @@ class _NewPostDetailsScreenState extends ConsumerState<CreatePostPage> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-
-            // Preview
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: AspectRatio(
-                aspectRatio: 1.15,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Container(
-                    color: Colors.grey.shade100,
-                    child: Image.file(
-                      File(widget.mediaPath),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // Caption
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: TextField(
-                controller: _captionCtrl,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Write anything you want to share :)",
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: _pink),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Tags
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: TagInput(
-                tags: _tags,
-                onChanged: (newTags) => setState(() {
-                  _tags
-                    ..clear()
-                    ..addAll(newTags);
-                }),
-              ),
-            ),
-
-            const Spacer(),
-
-            // Create button
-            Padding(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              // lets the UI scroll instead of overflowing (especially on small screens / keyboard open)
               padding: const EdgeInsets.only(bottom: 24),
-              child: SizedBox(
-                width: 160,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: loading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _pink,
-                    disabledBackgroundColor: _pink.withOpacity(.6),
-                    shape: const StadiumBorder(),
-                    elevation: 0,
-                  ),
-                  child: loading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          "Create Post",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: ConstrainedBox(
+                // forces content to be at least the screen height so Spacer-like behavior still works
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+
+                      // Preview
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: AspectRatio(
+                          aspectRatio: 1.15,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Container(
+                              color: Colors.grey.shade100,
+                              child: Image.file(
+                                File(widget.mediaPath),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Caption
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: TextField(
+                          controller: _captionCtrl,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: "Write anything you want to share :)",
+                            hintStyle: TextStyle(color: Colors.grey.shade400),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: _pink),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Tags
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: TagInput(
+                          tags: _tags,
+                          onChanged: (newTags) => setState(() {
+                            _tags
+                              ..clear()
+                              ..addAll(newTags);
+                          }),
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Create button (keeps same look, but scrolls into view if needed)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 0),
+                        child: SizedBox(
+                          width: 160,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: loading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _pink,
+                              disabledBackgroundColor: _pink.withOpacity(.6),
+                              shape: const StadiumBorder(),
+                              elevation: 0,
+                            ),
+                            child: loading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Create Post",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -199,7 +216,6 @@ class _TagInputState extends State<TagInput> {
     final t = raw.trim();
     if (t.isEmpty) return;
 
-    // basic cleanup: remove leading '#'
     final cleaned = t.startsWith("#") ? t.substring(1) : t;
     if (cleaned.isEmpty) return;
 

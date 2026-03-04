@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:artsphere/app/routes/app_routes.dart';
+import 'package:artsphere/features/auth/presentation/pages/home_screen.dart';
 import 'package:artsphere/features/post/presentation/pages/create_post_page.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -191,7 +193,7 @@ class _AddPostPageState extends State<AddPostPage> with WidgetsBindingObserver {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => AppRoutes.pushReplacement(context, HomeScreen()),
         ),
         title: const Text(
           "New Post",
