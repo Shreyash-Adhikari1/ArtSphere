@@ -8,26 +8,38 @@ class ProfilePostGrid extends StatelessWidget {
     required this.posts,
     required this.loading,
     this.onTapPost,
+    this.onLongPressPost, // ✅ add
   });
 
   final List<PostEntity> posts;
   final bool loading;
   final void Function(PostEntity post)? onTapPost;
+  final void Function(PostEntity post)? onLongPressPost; // ✅ add
 
   String _resolvePostMediaUrl(PostEntity post) {
-    final media = post.media ?? '';
+    final media = (post.media ?? '').trim();
+    if (media.isEmpty) return '';
 
-    if (media.startsWith("http://") || media.startsWith("https://"))
+    if (media.startsWith('http://') || media.startsWith('https://')) {
       return media;
-    if (media.startsWith("/uploads/")) return "${ApiEndpoints.baseUrl}$media";
+    }
+
+    if (media.startsWith('/uploads/')) {
+      return '${ApiEndpoints.mediaServerUrl}$media';
+    }
 
     final fileName = media.split('/').last;
 
-    final base = (post.isChallengeSubmission == true)
+    final looksLikeChallengeSubmission =
+        fileName.startsWith('challenge-submissions-') ||
+        media.contains('challenge-submissions');
+
+    final base =
+        (post.isChallengeSubmission == true || looksLikeChallengeSubmission)
         ? ApiEndpoints.challengeSubmissions
         : ApiEndpoints.postImages;
 
-    return "$base/$fileName";
+    return '$base/$fileName';
   }
 
   @override
@@ -74,6 +86,7 @@ class ProfilePostGrid extends StatelessWidget {
 
           return InkWell(
             onTap: () => onTapPost?.call(post),
+            onLongPress: () => onLongPressPost?.call(post), // ✅ add
             child: Container(
               color: Colors.grey.shade200,
               child: Image.network(

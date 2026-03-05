@@ -7,6 +7,7 @@ import 'package:artsphere/features/auth/presentation/state/user_state.dart';
 import 'package:artsphere/features/auth/presentation/viewmodels/user_view_model.dart';
 import 'package:artsphere/features/follow/presentation/viewmodels/follow_viewmodel.dart';
 import 'package:artsphere/features/follow/presentation/widgets/follow_list_modal.dart';
+import 'package:artsphere/features/post/domain/entities/post_entity.dart';
 import 'package:artsphere/features/post/presentation/viewmodels/post_viewmodel.dart';
 import 'package:artsphere/features/post/presentation/widgets/post_details_modal.dart';
 import 'package:artsphere/features/post/presentation/widgets/profile_post_grid.dart';
@@ -68,6 +69,87 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     if (!mounted) return;
     AppRoutes.pushAndRemoveUntil(context, LoginScreen());
+  }
+
+  Future<void> _showPostActions(PostEntity post) async {
+    final postId = post.postId;
+    if (postId == null) return;
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.black12,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  "Delete post",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.red,
+                  ),
+                ),
+                onTap: () => Navigator.pop(ctx, "delete"),
+              ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text("Cancel"),
+                onTap: () => Navigator.pop(ctx, "cancel"),
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (action != "delete") return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete post?"),
+        content: const Text("This action can’t be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final ok = await ref
+        .read(postViewModelProvider.notifier)
+        .deletePost(postId);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? "Post deleted" : "Failed to delete post")),
+    );
   }
 
   @override
@@ -183,6 +265,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     posts: ref.watch(postViewModelProvider).myPosts,
                     loading: ref.watch(postViewModelProvider).myPostsLoading,
                     onTapPost: (post) => showPostDetailsModal(context, post),
+                    onLongPressPost: (post) => _showPostActions(post),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
                 ],
