@@ -4,6 +4,8 @@ import 'package:artsphere/features/submission/presentation/states/submission_sta
 import 'package:artsphere/features/submission/presentation/viewmodels/submission_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CreateSubmissionPage extends ConsumerStatefulWidget {
   final String challengeId;
@@ -25,6 +27,9 @@ class _CreateSubmissionPageState extends ConsumerState<CreateSubmissionPage> {
 
   String? _mediaPath;
 
+  // --- Picker (same style as your EditProfilePage) ---
+  final ImagePicker _imagePicker = ImagePicker();
+
   @override
   void dispose() {
     _captionCtrl.dispose();
@@ -39,6 +44,123 @@ class _CreateSubmissionPageState extends ConsumerState<CreateSubmissionPage> {
         .where((t) => t.isNotEmpty)
         .toList();
   }
+
+  // Permission helper
+  Future<bool> _askUserforPermission(Permission permission) async {
+    final status = await permission.status;
+    if (status.isGranted) return true;
+
+    if (status.isDenied) {
+      final result = await permission.request();
+      return result.isGranted;
+    }
+
+    if (status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog();
+      return false;
+    }
+
+    return false;
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Permission Required"),
+        content: const Text(
+          "To give permissions for this feature, please go to settings.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: const Text("Open Settings"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clickFromCamera() async {
+    final hasPermission = await _askUserforPermission(Permission.camera);
+    if (!hasPermission) return;
+
+    final XFile? photo = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (photo != null) {
+      setState(() {
+        _mediaPath = photo.path; // ✅ this is what makes the UI show the image
+        _mediaType = "image"; // optional, keeps consistent
+      });
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        setState(() {
+          _mediaPath = image.path; // ✅ this is what makes the UI show the image
+          _mediaType = "image"; // optional, keeps consistent
+        });
+      }
+    } catch (e) {
+      debugPrint('Gallery Error $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Gallery permission not granted")),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickMedia() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color.fromARGB(255, 240, 227, 234),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_enhance_rounded),
+                title: const Text("Open Camera"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _clickFromCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.browse_gallery),
+                title: const Text("Open Gallery"),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickFromGallery();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // --- end picker ---
 
   Future<void> _submit() async {
     final vm = ref.read(submissionViewModelProvider.notifier);
@@ -61,8 +183,6 @@ class _CreateSubmissionPageState extends ConsumerState<CreateSubmissionPage> {
       tags: _parseTags(_tagsCtrl.text),
       visibility: _visibility,
       mediaType: _mediaType,
-      // media is NOT required here because repo uses mediaPath for upload
-      // author etc can be null in create request
     );
 
     final created = await vm.createNewPostAndSubmit(
@@ -108,13 +228,7 @@ class _CreateSubmissionPageState extends ConsumerState<CreateSubmissionPage> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           GestureDetector(
-            onTap: () async {
-              // TODO: connect your picker here (return a local file path)
-              // For now, just show a snackbar.
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Hook your media picker here 👀")),
-              );
-            },
+            onTap: busy ? null : _pickMedia, // ✅ hooked here
             child: Container(
               height: 220,
               decoration: BoxDecoration(
